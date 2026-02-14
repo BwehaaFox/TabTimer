@@ -3,6 +3,7 @@
 module.exports = function (environment) {
   const ENV = {
     modulePrefix: 'tabtimer',
+    podModulePrefix: 'tabtimer/pods',
     environment,
     rootURL: '/',
     locationType: 'history',
