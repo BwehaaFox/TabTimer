@@ -22,7 +22,11 @@
     "lint:js:fix": "eslint . --fix",
     "start": "ember serve --port=4201",
     "test": "concurrently \"npm:lint\" \"npm:test:*\" --names \"lint,test:\" --prefixColors auto",
-    "test:ember": "ember test"
+    "test:ember": "ember test",
+    "electron": "electron electron/main.js",
+    "electron-dev": "electron electron/main.js --dev",
+    "electron-pack": "electron-builder --dir",
+    "start-electron-app": "node start-electron-app.js"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -38,6 +42,8 @@
     "@types/node": "^25.2.3",
     "broccoli-asset-rev": "^3.0.0",
     "concurrently": "^9.1.0",
+    "electron": "^40.4.1",
+    "electron-builder": "^26.7.0",
     "ember-auto-import": "^2.10.0",
     "ember-cli": "~6.1.0",
     "ember-cli-app-version": "^7.0.0",
@@ -72,6 +78,7 @@
     "prettier-plugin-ember-template-tag": "^2.0.4",
     "qunit": "^2.23.1",
     "qunit-dom": "^3.4.0",
+    "sharp": "^0.34.5",
     "stylelint": "^16.12.0",
     "stylelint-config-standard": "^36.0.1",
     "stylelint-prettier": "^5.0.2",

@@ -1,0 +1,125 @@
+const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
+const path = require('path');
+const url = require('url');
+
+let mainWindow;
+let tray = null;
+let isDev = false;
+
+// Проверяем, запускается ли приложение в режиме разработки
+if (process.argv.includes('--dev')) {
+  isDev = true;
+}
+
+function createWindow() {
+  // Получаем размеры экрана
+  const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
+  
+  mainWindow = new BrowserWindow({
+    width: width,
+    height: height,
+    x: 0,
+    y: 0,
+    transparent: true,           // Окно прозрачное
+    frame: false,                // Без рамки
+    alwaysOnTop: true,           // Поверх всех окон
+    resizable: false,            // Нельзя изменять размер
+    skipTaskbar: true,           // Не показывать в панели задач
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true
+    },
+    icon: path.join(__dirname, '../electron/assets/icon.png'), // Путь к иконке
+    hasShadow: false             // Убираем тень окна
+  });
+
+  // Загружаем локальный файл или dev сервер
+  if (isDev) {
+    mainWindow.loadURL('http://localhost:4201'); // Адрес разработки Ember
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html')); // Путь к билду Ember
+  }
+
+  // Делаем окно кликабельным только в области .tabs-container
+  mainWindow.setBackgroundColor('#00FFFFFF'); // Полностью прозрачный фон
+  
+  // Убираем возможность выделения и скроллинга за пределами нужной области
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.insertCSS(`
+      body {
+        -webkit-user-select: none;
+      }
+      
+      /* Создаем прозрачный слой для перетаскивания окна */
+      .tab-timer-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        -webkit-app-region: drag;
+        z-index: 1;
+      }
+      
+      /* Поднимаем интерактивные элементы над слоем перетаскивания */
+      .tabs-container,
+      .tab-item,
+      .add-tab-button,
+      .start-stop-button,
+      .settings-button,
+      .delete-button {
+        position: relative;
+        z-index: 2;
+        -webkit-app-region: no-drag;
+      }
+    `);
+  });
+
+  // Игнорировать события мыши и пересылать их окнам ниже
+  mainWindow.setIgnoreMouseEvents(true, { forward: true });
+
+  // Скрываем окно при закрытии, а не уничтожаем
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+function createTray() {
+  tray = new Tray(path.join(__dirname, '../electron/assets/icon.png')); // Путь к иконке
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Закрыть приложение',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  tray.setToolTip('TabTimer');
+  
+  // При правом клике показываем контекстное меню
+  tray.on('right-click', () => {
+    tray.popUpContextMenu();
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  createTray();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
