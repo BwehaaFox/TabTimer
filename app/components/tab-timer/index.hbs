@@ -1,0 +1,48 @@
+<div class="tab-timer-wrapper">
+  {{!-- <div class="add-tab-zone" ...attributes>
+    <div class="add-tab-button hidden-until-hover" {{on "click" @onAddTab}}>
+      Добавить секундомер
+    </div>
+  </div> --}}
+
+  <div class="tabs-container">
+    {{#each @tabs key=@index as |tab|}}
+      <div class="tab-item" style="background-color: {{tab.backgroundColor}}">
+        <div class="tab-content">
+
+          <span class="tab-time">{{this.formatTime tab.time}}</span>
+          <div class="tab-content__hovered">
+            <span class="tab-name">{{if tab.name tab.name ""}}</span>
+            <button
+              class="start-stop-button"
+              {{on "click" (fn @onToggleTimer tab)}}
+            >
+              {{if tab.isRunning "❚❚" "▶"}}
+            </button>
+            <button
+              class="settings-button"
+              {{on "click" (fn @onOpenSettings tab)}}
+            >
+              ⚙
+            </button>
+            <button class="delete-button" {{on "click" (fn @onDeleteTab tab)}}>
+              &times;
+            </button>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+
+    <div class="add-tab-button visible-default" {{on "click" @onAddTab}}>
+      +
+    </div>
+  </div>
+
+  <SettingsModal
+    @isOpen={{@showSettingsModal}}
+    @tab={{@activeSettingsTab}}
+    @onClose={{@onCloseSettings}}
+    @onUpdateName={{@onUpdateTabName}}
+    @onDelete={{@onDeleteTab}}
+  />
+</div>
