@@ -64,9 +64,17 @@ export default class SettingsModalComponent extends Component {
       const actualCurrentTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
       const newTime = Math.max(0, actualCurrentTime + amount);
       this.args.onUpdateTime(this.args.tab, newTime);
-      
+
       // Обновляем локальное время после изменения
       this.currentTime = newTime;
+    }
+  }
+
+  @action
+  resetTime() {
+    if (this.args.tab) {
+      this.args.onUpdateTime(this.args.tab, 0);
+      this.currentTime = 0;
     }
   }
 
