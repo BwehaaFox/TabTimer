@@ -1,21 +1,25 @@
 {{#if @isOpen}}
-  <div class="modal-overlay" {{on "click" @onClose}}>
-    <div class="modal-content" ...attributes {{on "click" this.stopPropagation}}>
+  <div class="modal-overlay" {{on "click" @onClose}} {{mouse-track}}>
+    <div
+      class="modal-content"
+      ...attributes
+      {{on "click" this.stopPropagation}}
+    >
       <div class="modal-header">
         <h3>Настройки таймера</h3>
         <button class="close-button" {{on "click" @onClose}}>×</button>
       </div>
-      
+
       <div class="modal-body">
         <label for="tab-name">Название:</label>
-        <Input 
+        <Input
           id="tab-name"
-          @value={{@tab.name}} 
-          placeholder="Введите название таймера" 
+          @value={{@tab.name}}
+          placeholder="Введите название таймера"
           {{on "input" this.updateName}}
         />
       </div>
-      
+
       <div class="modal-footer">
         <button class="delete-button" {{on "click" @onDelete}}>Удалить таймер</button>
         <button class="save-button" {{on "click" @onClose}}>Сохранить</button>

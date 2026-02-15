@@ -39,21 +39,17 @@ body {
   width: min-content;
   text-wrap: nowrap;
   font-size: 1.3em;
-}
-
-.add-tab-button.hidden-until-hover {
   opacity: 0;
-}
-
-.add-tab-zone:hover .add-tab-button.hidden-until-hover {
-  opacity: 1;
-}
-
-.add-tab-button.visible-default {
-  opacity: 1;
   left: 10px;
   top: 10px;
   transform: none;
+}
+
+
+
+
+.add-tab-button:hover {
+  opacity: 1;
 }
 
 /* Стили для контейнера табов */

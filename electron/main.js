@@ -1,10 +1,44 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen } = require('electron');
 const path = require('path');
 const url = require('url');
 
 let mainWindow;
 let tray = null;
 let isDev = false;
+
+let componentBounds = { x: 0, y: 0, width: 0, height: 0 };
+let lastState = null; // Чтобы не дергать метод лишний раз
+
+ipcMain.on('update-component-bounds', (event, bounds) => {
+  componentBounds = bounds;
+});
+
+function startMouseTracking() {
+  setInterval(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    const mouse = screen.getCursorScreenPoint();
+
+    // Проверяем, попадает ли курсор в прямоугольник компонента
+    const isInside =
+      mouse.x >= componentBounds.x &&
+      mouse.x <= componentBounds.x + componentBounds.width &&
+      mouse.y >= componentBounds.y &&
+      mouse.y <= componentBounds.y + componentBounds.height;
+
+    // Меняем состояние только если оно изменилось (оптимизация)
+    if (isInside !== lastState) {
+      if (isInside) {
+        // Мышь над кнопками — включаем клики
+        mainWindow.setIgnoreMouseEvents(false);
+      } else {
+        // Мышь мимо — простреливаем насквозь
+        mainWindow.setIgnoreMouseEvents(true, { forward: true });
+      }
+      lastState = isInside;
+    }
+  }, 32); // ~30 FPS
+}
 
 // Проверяем, запускается ли приложение в режиме разработки
 if (process.argv.includes('--dev')) {
@@ -79,13 +113,14 @@ function createWindow() {
   });
 
   // Игнорировать события мыши и пересылать их окнам ниже
-  // mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  mainWindow.setIgnoreMouseEvents(true, { forward: true });
   // mainWindow.setFocusable(false);
 
   // Скрываем окно при закрытии, а не уничтожаем
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+  // startMouseTracking();
 }
 
 function createTray() {

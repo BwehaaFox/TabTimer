@@ -32,12 +32,7 @@ export default class TabTimerComponent extends Component {
   }
 
   @action
-  onEnter() {
-    window.electronAPI.setIgnoreMouse(false);
-  }
-
-  @action
-  onLeave() {
-    window.electronAPI.setIgnoreMouse(true, { forward: true });
+  seeContainer(container) {
+    // ddawdawddw
   }
 }

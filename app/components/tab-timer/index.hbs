@@ -5,12 +5,11 @@
     </div>
   </div> --}}
 
-  <div class="tabs-container">
+  <div class="tabs-container" {{did-insert @seeContainer}}>
     {{#each @tabs key=@index as |tab|}}
       <div
         class="tab-item"
-        {{on "mouseenter" this.onEnter}}
-        {{on "mouseleave" this.onLeave}}
+        {{mouse-track}}
         style="background-color: {{tab.backgroundColor}}"
       >
         <div class="tab-content">
@@ -38,7 +37,11 @@
       </div>
     {{/each}}
 
-    <div class="add-tab-button visible-default" {{on "click" @onAddTab}}>
+    <div
+      {{mouse-track}}
+      class="add-tab-button visible-default"
+      {{on "click" @onAddTab}}
+    >
       +
     </div>
   </div>
