@@ -6,7 +6,7 @@
       {{on "click" this.stopPropagation}}
     >
       <div class="modal-header">
-        <h3>Настройки таймера</h3>
+        <h3>{{if (eq @tab.type "timer") "Настройки таймера" "Настройки секундомера"}}</h3>
         <button class="close-button" {{on "click" @onClose}}>×</button>
       </div>
 
@@ -63,7 +63,7 @@
               class="reset-button"
               {{on "click" this.resetTime}}
             >
-              Сбросить таймер
+              {{if (eq @tab.type "timer") "Сбросить таймер к 10 мин." "Сбросить к 0"}}
             </button>
           </div>
         </div>

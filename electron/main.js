@@ -80,17 +80,17 @@ function createWindow() {
 
   // Игнорировать события мыши и пересылать их окнам ниже
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
-  
+
   // Устанавливаем приоритет окна "поверх всех" с более высоким уровнем
   mainWindow.setAlwaysOnTop(true, 'floating');
-  
+
   // mainWindow.setFocusable(false);
 
   // Скрываем окно при закрытии, а не уничтожаем
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-  
+
   // Добавляем обработчик для поддержания окна поверх других при активации
   mainWindow.on('blur', () => {
     // Когда окно теряет фокус, через короткое время снова устанавливаем его поверх
@@ -100,9 +100,9 @@ function createWindow() {
       }
     }, 100);
   });
-  
+
   // startMouseTracking();
-  
+
   // Установим интервал для периодической проверки, что окно остается поверх других
   setInterval(() => {
     if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {

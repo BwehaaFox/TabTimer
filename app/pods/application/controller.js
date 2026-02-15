@@ -34,16 +34,18 @@ export default class ApplicationController extends Controller {
       this.tabs = savedTabs.map((tab) => {
         // Проверяем, нужно ли обновить прозрачность у существующего цвета
         let backgroundColor = tab.backgroundColor;
-        
-        // Если цвет существует, но не содержит правильную прозрачность (0.4), 
+
+        // Если цвет существует, но не содержит правильную прозрачность (0.4),
         // преобразуем его в нужный формат
         if (backgroundColor && !this.hasProperTransparency(backgroundColor)) {
           backgroundColor = this.convertToProperTransparency(backgroundColor);
         }
-        
+
         return {
           ...tab,
-          isRunning: typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
+          type: tab.type || 'stopwatch', // Добавляем тип таймера, по умолчанию секундомер
+          isRunning:
+            typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
           time: tab.time || 0,
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
@@ -54,12 +56,13 @@ export default class ApplicationController extends Controller {
   }
 
   @action
-  addTab() {
+  addTab(type = 'stopwatch') {
     const newTab = {
       id: Date.now(),
       name: '',
-      time: 0,
+      time: type === 'timer' ? 600 : 0, // Для таймера устанавливаем 10 минут по умолчанию
       isRunning: false,
+      type: type,
       backgroundColor: this.getRandomBackgroundColor(),
     };
     this.tabs = [...this.tabs, newTab];
@@ -135,16 +138,18 @@ export default class ApplicationController extends Controller {
 
   convertToProperTransparency(rgbaString) {
     // Извлекаем значения r, g, b из строки rgba(r, g, b, a)
-    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+    const match = rgbaString.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/,
+    );
     if (!match) {
       // Если строка не соответствует формату rgba, возвращаем случайный цвет
       return this.getRandomBackgroundColor();
     }
-    
+
     const r = parseInt(match[1], 10);
     const g = parseInt(match[2], 10);
     const b = parseInt(match[3], 10);
-    
+
     return `rgba(${r}, ${g}, ${b}, 0.4)`;
   }
 
@@ -292,14 +297,14 @@ export default class ApplicationController extends Controller {
 
   handleDropFromComponent(index, event) {
     event.preventDefault();
-    
+
     // Удаляем визуальные эффекты
     event.target.classList.remove('drag-over');
     const elements = document.querySelectorAll('.tab-item');
-    elements.forEach(el => el.classList.remove('dragging'));
-    
+    elements.forEach((el) => el.classList.remove('dragging'));
+
     const draggedIndex = parseInt(event.dataTransfer.getData('text/plain'));
-    
+
     // Вызываем действие для обновления порядка
     this.reorderTabs(draggedIndex, index);
   }
@@ -314,10 +319,30 @@ export default class ApplicationController extends Controller {
       const updatedTabs = this.tabs.map((tab) => {
         if (tab.isRunning) {
           shouldUpdate = true;
+          let newTime = tab.time;
+
+          if (tab.type === 'stopwatch') {
+            // Для секундомера увеличиваем время
+            newTime = tab.time + 1;
+          } else if (tab.type === 'timer') {
+            // Для таймера уменьшаем время, не опуская ниже 0
+            newTime = Math.max(0, tab.time - 1);
+
+            // Если таймер достиг 0, останавливаем его
+            if (newTime === 0) {
+              return {
+                ...tab,
+                isRunning: false,
+                time: newTime,
+                backgroundColor: tab.backgroundColor,
+              };
+            }
+          }
+
           // Создаем новый объект с обновленным временем, сохраняя цвет фона
           return {
             ...tab,
-            time: tab.time + 1,
+            time: newTime,
             backgroundColor: tab.backgroundColor,
           };
         }

@@ -20,7 +20,13 @@
       >
         <div class="tab-content">
 
-          <span class="tab-time">{{this.formatTime tab.time}}</span>
+          <span
+            class={{if
+              (and (eq tab.type "timer") (eq tab.time 0))
+              "tab-time timer-finished"
+              "tab-time"
+            }}
+          >{{this.formatTime tab.time}}</span>
           <div class="tab-content__hovered">
             <span class="tab-name">{{if tab.name tab.name ""}}</span>
             <button
@@ -35,7 +41,10 @@
             >
               ⚙
             </button>
-            <button class="delete-button" {{on "click" (fn @onOpenConfirmDeleteModal tab)}}>
+            <button
+              class="delete-button"
+              {{on "click" (fn @onOpenConfirmDeleteModal tab)}}
+            >
               &times;
             </button>
           </div>
@@ -43,12 +52,35 @@
       </div>
     {{/each}}
 
-    <div
-      {{mouse-track}}
-      class="add-tab-button visible-default"
-      {{on "click" @onAddTab}}
-    >
-      +
+    <div class="add-tab-container">
+      {{#if this.showAddDropdown}}
+        <div 
+          class="add-tab-dropdown" 
+          {{mouse-track}}
+          {{on "mouseenter" this.cancelDropdownAutoClose}}
+          {{on "mouseleave" this.startDropdownAutoClose}}
+        >
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "stopwatch")}}
+          >
+            Добавить секундомер
+          </button>
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "timer")}}
+          >
+            Добавить таймер
+          </button>
+        </div>
+      {{/if}}
+      <div
+        {{mouse-track}}
+        class="add-tab-button visible-default"
+        {{on "click" this.toggleAddDropdown}}
+      >
+        +
+      </div>
     </div>
   </div>
 

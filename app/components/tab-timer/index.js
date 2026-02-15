@@ -1,7 +1,11 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
+import { tracked } from '@glimmer/tracking';
 
 export default class TabTimerComponent extends Component {
+  @tracked showAddDropdown = false;
+  dropdownTimeoutId = null;
+
   formatTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -30,6 +34,55 @@ export default class TabTimerComponent extends Component {
 
     const randomIndex = Math.floor(Math.random() * colors.length);
     return colors[randomIndex];
+  }
+
+  @action
+  toggleAddDropdown() {
+    this.showAddDropdown = !this.showAddDropdown;
+    
+    if (this.showAddDropdown) {
+      // Если выпадающий список открыт, запускаем таймер автозакрытия
+      this.startDropdownAutoClose();
+    } else {
+      // Если выпадающий список закрыт, отменяем таймер
+      if (this.dropdownTimeoutId) {
+        clearTimeout(this.dropdownTimeoutId);
+        this.dropdownTimeoutId = null;
+      }
+    }
+  }
+
+  @action
+  addNewTab(type) {
+    this.args.onAddTab(type);
+    this.showAddDropdown = false; // Скрываем выпадающий список после добавления
+    // Очищаем таймер, если он был установлен
+    if (this.dropdownTimeoutId) {
+      clearTimeout(this.dropdownTimeoutId);
+      this.dropdownTimeoutId = null;
+    }
+  }
+
+  @action
+  startDropdownAutoClose() {
+    // Очищаем предыдущий таймер, если он был
+    if (this.dropdownTimeoutId) {
+      clearTimeout(this.dropdownTimeoutId);
+    }
+    
+    // Устанавливаем таймер на 3 секунды для автозакрытия
+    this.dropdownTimeoutId = setTimeout(() => {
+      this.showAddDropdown = false;
+    }, 3000);
+  }
+
+  @action
+  cancelDropdownAutoClose() {
+    // Отменяем таймер автозакрытия при наведении на выпадающий список
+    if (this.dropdownTimeoutId) {
+      clearTimeout(this.dropdownTimeoutId);
+      this.dropdownTimeoutId = null;
+    }
   }
 
   @action
@@ -62,17 +115,26 @@ export default class TabTimerComponent extends Component {
   @action
   handleDrop(index, event) {
     event.preventDefault();
-    
+
     // Удаляем визуальные эффекты
     event.target.classList.remove('drag-over');
     const elements = document.querySelectorAll('.tab-item');
     elements.forEach(el => el.classList.remove('dragging'));
-    
+
     const draggedIndex = parseInt(event.dataTransfer.getData('text/plain'));
-    
+
     // Вызываем внешнее действие для обновления порядка
     if (typeof this.args.onReorderTabs === 'function') {
       this.args.onReorderTabs(draggedIndex, index);
     }
+  }
+
+  willDestroy() {
+    // Очищаем таймер при уничтожении компонента
+    if (this.dropdownTimeoutId) {
+      clearTimeout(this.dropdownTimeoutId);
+      this.dropdownTimeoutId = null;
+    }
+    super.willDestroy(...arguments);
   }
 }

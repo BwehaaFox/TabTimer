@@ -79,8 +79,13 @@ export default class SettingsModalComponent extends Component {
   @action
   resetTime() {
     if (this.args.tab) {
-      this.args.onUpdateTime(this.args.tab, 0);
-      this.currentTime = 0;
+      let defaultTime = 0;
+      if (this.args.tab.type === 'timer') {
+        // Для таймера устанавливаем 10 минут по умолчанию при сбросе
+        defaultTime = 600;
+      }
+      this.args.onUpdateTime(this.args.tab, defaultTime);
+      this.currentTime = defaultTime;
     }
   }
 
@@ -96,16 +101,28 @@ export default class SettingsModalComponent extends Component {
 
   get minusOneDisabled() {
     const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    // Для таймера кнопка "минус секунда" не должна быть отключена, так как можно уменьшать время
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      return false;
+    }
     return this.args.tab && actualTime < 1;
   }
 
   get minusMinuteDisabled() {
     const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    // Для таймера кнопка "минус минута" не должна быть отключена, так как можно уменьшать время
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      return false;
+    }
     return this.args.tab && actualTime < 60;
   }
 
   get minusHourDisabled() {
     const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    // Для таймера кнопка "минус час" не должна быть отключена, так как можно уменьшать время
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      return false;
+    }
     return this.args.tab && actualTime < 3600;
   }
 
