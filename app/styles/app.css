@@ -125,7 +125,7 @@ body {
 }
 
 .tab-item:has(.tab-time:hover), .add-tab-button:hover {
-  transition: margin-left 0.1s 1s ease;
+  transition: margin-left 0s 1s ease;
   margin-left: -500px
 }
 
