@@ -9,7 +9,7 @@
   <div class="tabs-container">
     {{#each @tabs key=@index as |tab index|}}
       <div
-        class="tab-item"
+        class="tab-item {{if tab.isRunning 'tab-item_active'}}"
         draggable="true"
         {{on "dragstart" (fn this.handleDragStart index)}}
         {{on "dragover" (fn this.handleDragOver index)}}
@@ -21,6 +21,24 @@
       >
         <div class="tab-content">
           {{log this.extraClassForFinishedTimer}}
+          <div class="tab-content-icon-wrapper">
+            {{#if (eq tab.type "timer")}}
+              <img
+                class="tab-content-icon"
+                src="assets/chevron-down.svg"
+                alt=""
+              />
+            {{else if (eq tab.type "countdown")}}
+              <img class="tab-content-icon" src="assets/calendar.svg" alt="" />
+            {{else}}
+              <img
+                class="tab-content-icon"
+                src="assets/chevron-up.svg"
+                alt=""
+              />
+            {{/if}}
+
+          </div>
           <span
             class="tab-time
               {{if
