@@ -6,10 +6,7 @@
   "repository": "",
   "license": "MIT",
   "author": "",
-  "directories": {
-    "doc": "doc",
-    "test": "tests"
-  },
+  "main": "electron/main.js",
   "scripts": {
     "build": "ember build --environment=production",
     "lint": "concurrently \"npm:lint:*(!fix)\" --names \"lint:\" --prefixColors auto",
@@ -20,7 +17,7 @@
     "lint:hbs:fix": "ember-template-lint . --fix",
     "lint:js": "eslint . --cache",
     "lint:js:fix": "eslint . --fix",
-    "start": "ember serve --port=4201",
+    "start": "ember serve --port=4987",
     "test": "concurrently \"npm:lint\" \"npm:test:*\" --names \"lint,test:\" --prefixColors auto",
     "test:ember": "ember test",
     "electron": "electron electron/main.js",
@@ -91,5 +88,21 @@
   },
   "ember": {
     "edition": "octane"
+  },
+  "build": {
+    "appId": "com.example.tabtimer",
+    "productName": "TabTimer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "electron/assets/icon.png"
+    }
   }
 }

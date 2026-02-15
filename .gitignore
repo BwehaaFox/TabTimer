@@ -1,7 +1,7 @@
 # compiled output
 /dist/
 /declarations/
-
+/release
 # dependencies
 /node_modules/
 
