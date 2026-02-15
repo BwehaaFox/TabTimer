@@ -22,8 +22,11 @@
     "test:ember": "ember test",
     "electron": "electron electron/main.js",
     "electron-dev": "electron electron/main.js --dev",
-    "electron-pack": "electron-builder --dir",
+    "electron-pack": "yarn build & electron-builder --dir",
     "start-electron-app": "node start-electron-app.js"
+  },
+  "dependencies": {
+    "ember-resolver": "^13.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -103,6 +106,10 @@
     "win": {
       "target": "nsis",
       "icon": "electron/assets/icon.png"
-    }
+    },
+    "asar": true,
+  "asarUnpack": [
+    "**/node_modules/ember-resolver/**/*"
+  ]
   }
 }

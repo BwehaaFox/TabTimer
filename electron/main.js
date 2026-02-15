@@ -6,40 +6,6 @@ let mainWindow;
 let tray = null;
 let isDev = false;
 
-let componentBounds = { x: 0, y: 0, width: 0, height: 0 };
-let lastState = null; // Чтобы не дергать метод лишний раз
-
-ipcMain.on('update-component-bounds', (event, bounds) => {
-  componentBounds = bounds;
-});
-
-function startMouseTracking() {
-  setInterval(() => {
-    if (!mainWindow || mainWindow.isDestroyed()) return;
-
-    const mouse = screen.getCursorScreenPoint();
-
-    // Проверяем, попадает ли курсор в прямоугольник компонента
-    const isInside =
-      mouse.x >= componentBounds.x &&
-      mouse.x <= componentBounds.x + componentBounds.width &&
-      mouse.y >= componentBounds.y &&
-      mouse.y <= componentBounds.y + componentBounds.height;
-
-    // Меняем состояние только если оно изменилось (оптимизация)
-    if (isInside !== lastState) {
-      if (isInside) {
-        // Мышь над кнопками — включаем клики
-        mainWindow.setIgnoreMouseEvents(false);
-      } else {
-        // Мышь мимо — простреливаем насквозь
-        mainWindow.setIgnoreMouseEvents(true, { forward: true });
-      }
-      lastState = isInside;
-    }
-  }, 32); // ~30 FPS
-}
-
 // Проверяем, запускается ли приложение в режиме разработки
 if (process.argv.includes('--dev')) {
   isDev = true;
@@ -68,10 +34,10 @@ function createWindow() {
     icon: path.join(__dirname, '../electron/assets/icon.png'), // Путь к иконке
     hasShadow: false, // Убираем тень окна
   });
-
+  // mainWindow.webContents.openDevTools();
   // Загружаем локальный файл или dev сервер
   if (isDev) {
-    mainWindow.loadURL('http://localhost:4201'); // Адрес разработки Ember
+    mainWindow.loadURL('http://localhost:4987'); // Адрес разработки Ember
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html')); // Путь к билду Ember
   }

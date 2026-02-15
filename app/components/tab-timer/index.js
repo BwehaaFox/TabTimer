@@ -30,9 +30,4 @@ export default class TabTimerComponent extends Component {
     const randomIndex = Math.floor(Math.random() * colors.length);
     return colors[randomIndex];
   }
-
-  @action
-  seeContainer(container) {
-    // ddawdawddw
-  }
 }

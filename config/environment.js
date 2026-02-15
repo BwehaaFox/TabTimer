@@ -5,8 +5,8 @@ module.exports = function (environment) {
     modulePrefix: 'tabtimer',
     podModulePrefix: 'tabtimer/pods',
     environment,
-    rootURL: '/',
-    locationType: 'history',
+    rootURL: environment === 'development' ? '/' : '',
+    locationType: environment === 'development' ? 'history' : 'hash',
     EmberENV: {
       EXTEND_PROTOTYPES: false,
       FEATURES: {
