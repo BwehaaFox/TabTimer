@@ -25,17 +25,19 @@
             class={{if
               (and (eq tab.type "timer") (eq tab.time 0))
               (if this.extraClassForFinishedTimer "tab-time timer-finished extra-finished-timer" "tab-time timer-finished")
-              "tab-time"
+              (if (and (eq tab.type "countdown") (eq tab.time 0)) "tab-time countdown-finished" "tab-time")
             }}
-          >{{this.formatTime tab.time}}</span>
+          >{{if (and (eq tab.type "countdown") (eq tab.time 0)) "Время истекло!" (this.formatTime tab.time)}}</span>
           <div class="tab-content__hovered">
             <span class="tab-name">{{if tab.name tab.name ""}}</span>
-            <button
-              class="start-stop-button"
-              {{on "click" (fn @onToggleTimer tab)}}
-            >
-              {{if tab.isRunning "❚❚" "▶"}}
-            </button>
+            {{#unless (eq tab.type "countdown")}}
+              <button
+                class="start-stop-button"
+                {{on "click" (fn @onToggleTimer tab)}}
+              >
+                {{if tab.isRunning "❚❚" "▶"}}
+              </button>
+            {{/unless}}
             <button
               class="settings-button"
               {{on "click" (fn @onOpenSettings tab)}}
@@ -55,8 +57,8 @@
 
     <div class="add-tab-container">
       {{#if this.showAddDropdown}}
-        <div 
-          class="add-tab-dropdown" 
+        <div
+          class="add-tab-dropdown"
           {{mouse-track}}
           {{on "mouseenter" this.cancelDropdownAutoClose}}
           {{on "mouseleave" this.startDropdownAutoClose}}
@@ -72,6 +74,12 @@
             {{on "click" (fn this.addNewTab "timer")}}
           >
             Добавить таймер
+          </button>
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "countdown")}}
+          >
+            Добавить обратный отсчет
           </button>
         </div>
       {{/if}}
@@ -97,6 +105,7 @@
     @onUpdateName={{@onUpdateTabName}}
     @onUpdateTime={{@onUpdateTabTime}}
     @onUpdateBackgroundColor={{@onUpdateTabBackgroundColor}}
+    @onUpdateTargetDateTime={{@onUpdateTargetDateTime}}
     @onDelete={{@onDeleteTab}}
   />
 </div>

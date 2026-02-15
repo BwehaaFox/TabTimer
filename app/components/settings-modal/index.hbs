@@ -6,67 +6,86 @@
       {{on "click" this.stopPropagation}}
     >
       <div class="modal-header">
-        <h3>{{if (eq @tab.type "timer") "Настройки таймера" "Настройки секундомера"}}</h3>
+        <h3>{{if (eq @tab.type "timer") "Настройки таймера" (if (eq @tab.type "countdown") "Настройки обратного отсчета" "Настройки секундомера")}}</h3>
         <button class="close-button" {{on "click" @onClose}}>×</button>
       </div>
 
       <div class="modal-body">
-        <div class="time-adjustment">
-          <div class="time-display">
+        {{#unless (eq @tab.type "countdown")}}
+          <div class="time-adjustment">
+            <div class="time-display">
 
-            <button
-              class="adjust-time-btn minus-hour"
-              disabled={{this.minusHourDisabled}}
-              {{on "click" (fn this.adjustTime -3600)}}
-            >
-              Ч
-            </button>
-            <button
-              class="adjust-time-btn minus-minute"
-              disabled={{this.minusMinuteDisabled}}
-              {{on "click" (fn this.adjustTime -60)}}
-            >
-              М
-            </button>
-            <button
-              class="adjust-time-btn minus-one"
-              disabled={{this.minusOneDisabled}}
-              {{on "click" (fn this.adjustTime -1)}}
-            >
-              С
-            </button>
+              <button
+                class="adjust-time-btn minus-hour"
+                disabled={{this.minusHourDisabled}}
+                {{on "click" (fn this.adjustTime -3600)}}
+              >
+                Ч
+              </button>
+              <button
+                class="adjust-time-btn minus-minute"
+                disabled={{this.minusMinuteDisabled}}
+                {{on "click" (fn this.adjustTime -60)}}
+              >
+                М
+              </button>
+              <button
+                class="adjust-time-btn minus-one"
+                disabled={{this.minusOneDisabled}}
+                {{on "click" (fn this.adjustTime -1)}}
+              >
+                С
+              </button>
 
-            <span class="current-time">{{this.formattedTime}}</span>
+              <span class="current-time">{{this.formattedTime}}</span>
 
-            <button
-              class="adjust-time-btn plus-one"
-              {{on "click" (fn this.adjustTime 1)}}
-            >
-              С
-            </button>
-            <button
-              class="adjust-time-btn plus-minute"
-              {{on "click" (fn this.adjustTime 60)}}
-            >
-              М
-            </button>
-            <button
-              class="adjust-time-btn plus-hour"
-              {{on "click" (fn this.adjustTime 3600)}}
-            >
-              Ч
-            </button>
+              <button
+                class="adjust-time-btn plus-one"
+                {{on "click" (fn this.adjustTime 1)}}
+              >
+                С
+              </button>
+              <button
+                class="adjust-time-btn plus-minute"
+                {{on "click" (fn this.adjustTime 60)}}
+              >
+                М
+              </button>
+              <button
+                class="adjust-time-btn plus-hour"
+                {{on "click" (fn this.adjustTime 3600)}}
+              >
+                Ч
+              </button>
+            </div>
+
+            <div class="reset-section">
+              <button
+                class="reset-button"
+                {{on "click" this.resetTime}}
+              >
+                {{if (eq @tab.type "timer") "Сбросить таймер к 10 мин." "Сбросить к 0"}}
+              </button>
+            </div>
           </div>
-          
-          <div class="reset-section">
-            <button
-              class="reset-button"
-              {{on "click" this.resetTime}}
-            >
-              {{if (eq @tab.type "timer") "Сбросить таймер к 10 мин." "Сбросить к 0"}}
-            </button>
+        {{/unless}}
+
+        {{#if (eq @tab.type "countdown")}}
+          <div class="countdown-settings">
+            <label for="countdown-datetime">Выберите дату и время:</label>
+            <input
+              id="countdown-datetime"
+              type="datetime-local"
+              value={{this.formattedTargetDateTime}}
+              {{on "change" this.updateTargetDateTime}}
+              {{on "input" this.updateTargetDateTime}}
+            />
+            <div class="current-countdown-time">
+              <strong>Текущее время обратного отсчета:</strong><br>
+              <span class="countdown-time-display">{{this.formattedTime}}</span>
+            </div>
           </div>
-        </div>
+        {{/if}}
 
         <label for="tab-name">Название:</label>
         <Input

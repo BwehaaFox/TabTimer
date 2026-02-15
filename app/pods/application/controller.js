@@ -47,6 +47,7 @@ export default class ApplicationController extends Controller {
           isRunning:
             typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
           time: tab.time || 0,
+          targetDateTime: tab.targetDateTime || null, // Добавляем целевую дату и время для countdown
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
       });
@@ -57,12 +58,31 @@ export default class ApplicationController extends Controller {
 
   @action
   addTab(type = 'stopwatch') {
+    let initialTime = 0;
+    let isRunning = false;
+    
+    if (type === 'timer') {
+      initialTime = 600; // Для таймера устанавливаем 10 минут по умолчанию
+      isRunning = false;
+    } else if (type === 'countdown') {
+      // Для countdown устанавливаем дату на 1 день вперед по умолчанию
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1);
+      initialTime = Math.floor((futureDate.getTime() - Date.now()) / 1000); // Разница в секундах
+      isRunning = true; // Countdown всегда запущен
+    } else {
+      // Для stopwatch
+      initialTime = 0;
+      isRunning = false;
+    }
+    
     const newTab = {
       id: Date.now(),
       name: '',
-      time: type === 'timer' ? 600 : 0, // Для таймера устанавливаем 10 минут по умолчанию
-      isRunning: false,
+      time: initialTime,
+      isRunning: isRunning,
       type: type,
+      targetDateTime: type === 'countdown' ? new Date(Date.now() + 86400000).toISOString() : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
       backgroundColor: this.getRandomBackgroundColor(),
     };
     this.tabs = [...this.tabs, newTab];
@@ -206,6 +226,45 @@ export default class ApplicationController extends Controller {
   }
 
   @action
+  updateTabTargetDateTime(tab, targetDateTime) {
+    console.log('updateTabTargetDateTime called', tab.id, targetDateTime);
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      // Рассчитываем новое время на основе новой целевой даты
+      const targetDate = new Date(targetDateTime);
+      const now = new Date();
+      const newTime = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+      
+      console.log('Calculated new time:', newTime);
+      
+      // Для countdown таймера устанавливаем isRunning в true, если время не истекло
+      const isRunning = newTime > 0;
+      
+      const updatedTab = {
+        ...tab,
+        targetDateTime: targetDateTime,
+        time: newTime,
+        isRunning: isRunning,
+        backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+      
+      // Обновляем activeSettingsTab, если он соответствует изменяемому табу
+      if (this.activeSettingsTab && this.activeSettingsTab.id === tab.id) {
+        this.activeSettingsTab = updatedTab;
+      }
+      
+      this.saveTabs();
+      console.log('Updated tabs and saved');
+    }
+  }
+
+  @action
   updateTabBackgroundColor(tab, backgroundColor) {
     const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
     if (tabIndex !== -1) {
@@ -320,14 +379,14 @@ export default class ApplicationController extends Controller {
         if (tab.isRunning) {
           shouldUpdate = true;
           let newTime = tab.time;
-
+          
           if (tab.type === 'stopwatch') {
             // Для секундомера увеличиваем время
             newTime = tab.time + 1;
           } else if (tab.type === 'timer') {
             // Для таймера уменьшаем время, не опуская ниже 0
             newTime = Math.max(0, tab.time - 1);
-
+            
             // Если таймер достиг 0, останавливаем его
             if (newTime === 0) {
               return {
@@ -337,8 +396,25 @@ export default class ApplicationController extends Controller {
                 backgroundColor: tab.backgroundColor,
               };
             }
+          } else if (tab.type === 'countdown') {
+            // Для countdown пересчитываем время до целевой даты
+            if (tab.targetDateTime) {
+              const targetDate = new Date(tab.targetDateTime);
+              const now = new Date();
+              newTime = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+              
+              // Если время истекло, останавливаем таймер
+              if (newTime === 0) {
+                return {
+                  ...tab,
+                  isRunning: false,
+                  time: newTime,
+                  backgroundColor: tab.backgroundColor,
+                };
+              }
+            }
           }
-
+          
           // Создаем новый объект с обновленным временем, сохраняя цвет фона
           return {
             ...tab,

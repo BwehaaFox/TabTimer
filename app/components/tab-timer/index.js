@@ -158,7 +158,7 @@ export default class TabTimerComponent extends Component {
     
     // Проверяем каждый таймер на предмет завершения
     currentTabs.forEach(currentTab => {
-      if (currentTab.type === 'timer' && currentTab.time === 0) {
+      if ((currentTab.type === 'timer' || currentTab.type === 'countdown') && currentTab.time === 0) {
         // Найдем предыдущее состояние этого таймера
         const previousTab = previousTabs.find(tab => tab.id === currentTab.id);
         

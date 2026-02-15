@@ -8,15 +8,21 @@ export default class SettingsModalComponent extends Component {
 
   @tracked currentTime = null;
   @tracked selectedColor = null;
+  @tracked targetDateTime = null;
 
   constructor() {
     super(...arguments);
     // Устанавливаем начальное время при создании компонента, проверяя наличие tab
     this.currentTime = this.args.tab ? this.args.tab.time : 0;
-    
+
     // Устанавливаем начальный цвет фона, извлекая его из rgba в hex формат
     if (this.args.tab && this.args.tab.backgroundColor) {
       this.selectedColor = this.rgbaToHex(this.args.tab.backgroundColor);
+    }
+
+    // Устанавливаем начальное значение целевой даты и времени для countdown
+    if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
+      this.targetDateTime = this.args.tab.targetDateTime;
     }
 
     // Запускаем интервал для обновления времени
@@ -99,6 +105,23 @@ export default class SettingsModalComponent extends Component {
     return '0:00';
   }
 
+  @cached
+  get formattedTargetDateTime() {
+    if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
+      // Преобразуем ISO строку в формат, подходящий для datetime-local input
+      // Убираем миллисекунды и Z из строки
+      const date = new Date(this.args.tab.targetDateTime);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    return '';
+  }
+
   get minusOneDisabled() {
     const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
     // Для таймера кнопка "минус секунда" не должна быть отключена, так как можно уменьшать время
@@ -166,13 +189,47 @@ export default class SettingsModalComponent extends Component {
   updateBackgroundColor(event) {
     const newHexColor = event.target.value;
     this.selectedColor = newHexColor;
-    
+
     // Преобразуем hex в rgba с прозрачностью 0.4
     const newRgbaColor = this.hexToRgba(newHexColor, 0.4);
-    
+
     // Вызываем внешний обработчик для обновления цвета фона таймера
     if (this.args.onUpdateBackgroundColor) {
       this.args.onUpdateBackgroundColor(this.args.tab, newRgbaColor);
+    }
+  }
+
+  @action
+  updateTargetDateTime(event) {
+    console.log('updateTargetDateTime called', event.target.value);
+    const newDateTime = event.target.value;
+    console.log('Args received:', this.args);
+    console.log('onUpdateTargetDateTime function exists:', typeof this.args.onUpdateTargetDateTime);
+    
+    if (newDateTime && this.args.tab && this.args.tab.type === 'countdown') {
+      // Преобразуем выбранное значение в ISO строку
+      const selectedDate = new Date(newDateTime);
+      const isoString = selectedDate.toISOString();
+      
+      console.log('Updating target date time:', isoString);
+      
+      // Обновляем значение в состоянии компонента
+      this.targetDateTime = isoString;
+      
+      // Рассчитываем новое время для отображения
+      const now = new Date();
+      const timeDifference = Math.max(0, Math.floor((selectedDate.getTime() - now.getTime()) / 1000));
+      
+      // Обновляем локальное время для отображения
+      this.currentTime = timeDifference;
+      
+      // Обновляем целевую дату и время (это также обновит время таймера)
+      if (this.args.onUpdateTargetDateTime && typeof this.args.onUpdateTargetDateTime === 'function') {
+        console.log('Calling onUpdateTargetDateTime');
+        this.args.onUpdateTargetDateTime(this.args.tab, isoString);
+      } else {
+        console.error('onUpdateTargetDateTime is not a function');
+      }
     }
   }
 }

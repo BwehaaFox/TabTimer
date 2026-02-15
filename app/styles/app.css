@@ -211,6 +211,17 @@ body {
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.7); /* Красная тень */
 }
 
+.countdown-finished {
+  color: #28a745 !important; /* Зеленый цвет для завершенного обратного отсчета */
+  animation: countdownFinishAnimation 1s infinite; /* Анимация для завершенного обратного отсчета */
+}
+
+@keyframes countdownFinishAnimation {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
 @keyframes blink {
   0% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -387,6 +398,43 @@ body {
 .reset-button:hover {
   background-color: #e0a800;
   border-color: #d39e00;
+}
+
+/* Стили для настроек обратного отсчета */
+.countdown-settings {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.countdown-settings label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.countdown-settings input[type="datetime-local"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+
+.current-countdown-time {
+  text-align: center;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.countdown-time-display {
+  font-family: monospace;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #007bff;
 }
 
 /* Стили для перетаскивания */
