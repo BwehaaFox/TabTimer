@@ -9,6 +9,9 @@ export default class SettingsModalComponent extends Component {
   @tracked currentTime = null;
   @tracked selectedColor = null;
   @tracked targetDateTime = null;
+  @tracked cycleHours = null;
+  @tracked cycleMinutes = null;
+  @tracked cycleSeconds = null;
 
   constructor() {
     super(...arguments);
@@ -23,6 +26,12 @@ export default class SettingsModalComponent extends Component {
     // Устанавливаем начальное значение целевой даты и времени для countdown
     if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
       this.targetDateTime = this.args.tab.targetDateTime;
+    }
+
+    // Устанавливаем начальные значения длительности цикла для cyclic-timer
+    if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
+      const cycleDuration = this.args.tab.cycleDuration || 3600; // по умолчанию 1 час
+      this.setCycleTimeValues(cycleDuration);
     }
 
     // Запускаем интервал для обновления времени
@@ -205,24 +214,24 @@ export default class SettingsModalComponent extends Component {
     const newDateTime = event.target.value;
     console.log('Args received:', this.args);
     console.log('onUpdateTargetDateTime function exists:', typeof this.args.onUpdateTargetDateTime);
-    
+
     if (newDateTime && this.args.tab && this.args.tab.type === 'countdown') {
       // Преобразуем выбранное значение в ISO строку
       const selectedDate = new Date(newDateTime);
       const isoString = selectedDate.toISOString();
-      
+
       console.log('Updating target date time:', isoString);
-      
+
       // Обновляем значение в состоянии компонента
       this.targetDateTime = isoString;
-      
+
       // Рассчитываем новое время для отображения
       const now = new Date();
       const timeDifference = Math.max(0, Math.floor((selectedDate.getTime() - now.getTime()) / 1000));
-      
+
       // Обновляем локальное время для отображения
       this.currentTime = timeDifference;
-      
+
       // Обновляем целевую дату и время (это также обновит время таймера)
       if (this.args.onUpdateTargetDateTime && typeof this.args.onUpdateTargetDateTime === 'function') {
         console.log('Calling onUpdateTargetDateTime');
@@ -231,5 +240,51 @@ export default class SettingsModalComponent extends Component {
         console.error('onUpdateTargetDateTime is not a function');
       }
     }
+  }
+
+  @action
+  updateCycleDuration(event) {
+    // Обновляем внутренние значения в зависимости от того, какое поле было изменено
+    if (event.target.id === 'cycle-duration-hours') {
+      this.cycleHours = event.target.value;
+    } else if (event.target.id === 'cycle-duration-minutes') {
+      this.cycleMinutes = event.target.value;
+    } else if (event.target.id === 'cycle-duration-seconds') {
+      this.cycleSeconds = event.target.value;
+    }
+    
+    if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
+      // Получаем значения из всех полей
+      const hours = parseInt(this.cycleHours) || 0;
+      const minutes = parseInt(this.cycleMinutes) || 0;
+      const seconds = parseInt(this.cycleSeconds) || 0;
+
+      // Рассчитываем общее время в секундах
+      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+      // Обновляем длительность цикла
+      if (this.args.onUpdateCycleDuration && typeof this.args.onUpdateCycleDuration === 'function') {
+        this.args.onUpdateCycleDuration(this.args.tab, totalSeconds);
+      }
+    }
+  }
+
+  setCycleTimeValues(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    this.cycleHours = hours;
+    this.cycleMinutes = minutes;
+    this.cycleSeconds = seconds;
+  }
+
+  @cached
+  get formattedCycleTime() {
+    if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
+      const cycleDuration = this.args.tab.cycleDuration || 3600; // по умолчанию 1 час
+      return this.formatTime(cycleDuration);
+    }
+    return '0:00';
   }
 }

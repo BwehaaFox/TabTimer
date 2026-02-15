@@ -13,6 +13,8 @@ export default class ApplicationController extends Controller {
   @tracked tabToDelete = null;
 
   timerIntervalId = null;
+  // Хранение таймаутов для циклических таймеров
+  cyclicTimerTimeouts = new Map();
 
   constructor() {
     super(...arguments);
@@ -47,6 +49,7 @@ export default class ApplicationController extends Controller {
           isRunning:
             typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
           time: tab.time || 0,
+          cycleDuration: tab.cycleDuration || (tab.type === 'cyclic-timer' ? 3600 : undefined), // Устанавливаем длительность цикла по умолчанию для циклических таймеров
           targetDateTime: tab.targetDateTime || null, // Добавляем целевую дату и время для countdown
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
@@ -60,7 +63,7 @@ export default class ApplicationController extends Controller {
   addTab(type = 'stopwatch') {
     let initialTime = 0;
     let isRunning = false;
-    
+
     if (type === 'timer') {
       initialTime = 600; // Для таймера устанавливаем 10 минут по умолчанию
       isRunning = false;
@@ -70,18 +73,23 @@ export default class ApplicationController extends Controller {
       futureDate.setDate(futureDate.getDate() + 1);
       initialTime = Math.floor((futureDate.getTime() - Date.now()) / 1000); // Разница в секундах
       isRunning = true; // Countdown всегда запущен
+    } else if (type === 'cyclic-timer') {
+      // Для циклического таймера устанавливаем 1 час по умолчанию
+      initialTime = 3600; // 1 час в секундах
+      isRunning = false;
     } else {
       // Для stopwatch
       initialTime = 0;
       isRunning = false;
     }
-    
+
     const newTab = {
       id: Date.now(),
       name: '',
       time: initialTime,
       isRunning: isRunning,
       type: type,
+      cycleDuration: type === 'cyclic-timer' ? 3600 : undefined, // Длительность цикла по умолчанию 1 час для циклического таймера
       targetDateTime: type === 'countdown' ? new Date(Date.now() + 86400000).toISOString() : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
       backgroundColor: this.getRandomBackgroundColor(),
     };
@@ -111,9 +119,21 @@ export default class ApplicationController extends Controller {
   toggleTimer(tab) {
     const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
     if (tabIndex !== -1) {
+      const isCurrentlyRunning = tab.isRunning;
+      const newIsRunningState = !isCurrentlyRunning;
+      
+      // Если останавливаем циклический таймер, очищаем его таймаут
+      if (tab.type === 'cyclic-timer' && isCurrentlyRunning && !newIsRunningState) {
+        if (this.cyclicTimerTimeouts.has(tab.id)) {
+          const timeoutId = this.cyclicTimerTimeouts.get(tab.id);
+          clearTimeout(timeoutId);
+          this.cyclicTimerTimeouts.delete(tab.id);
+        }
+      }
+      
       const updatedTab = {
         ...tab,
-        isRunning: !tab.isRunning,
+        isRunning: newIsRunningState,
         backgroundColor: tab.backgroundColor,
       };
       const updatedTabs = [
@@ -284,8 +304,35 @@ export default class ApplicationController extends Controller {
   }
 
   @action
+  updateTabCycleDuration(tab, cycleDuration) {
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      const updatedTab = {
+        ...tab,
+        cycleDuration: cycleDuration,
+        backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+      this.activeSettingsTab = updatedTab;
+      this.saveTabs();
+    }
+  }
+
+  @action
   deleteTab(tabToDelete) {
     if (tabToDelete) {
+      // Если удаляемый таймер является циклическим и имеет активный таймаут, очищаем его
+      if (this.cyclicTimerTimeouts.has(tabToDelete.id)) {
+        const timeoutId = this.cyclicTimerTimeouts.get(tabToDelete.id);
+        clearTimeout(timeoutId);
+        this.cyclicTimerTimeouts.delete(tabToDelete.id);
+      }
+      
       this.tabs = this.tabs.filter((tab) => tab.id !== tabToDelete.id);
       if (
         this.activeSettingsTab &&
@@ -379,14 +426,14 @@ export default class ApplicationController extends Controller {
         if (tab.isRunning) {
           shouldUpdate = true;
           let newTime = tab.time;
-          
+
           if (tab.type === 'stopwatch') {
             // Для секундомера увеличиваем время
             newTime = tab.time + 1;
           } else if (tab.type === 'timer') {
             // Для таймера уменьшаем время, не опуская ниже 0
             newTime = Math.max(0, tab.time - 1);
-            
+
             // Если таймер достиг 0, останавливаем его
             if (newTime === 0) {
               return {
@@ -396,13 +443,60 @@ export default class ApplicationController extends Controller {
                 backgroundColor: tab.backgroundColor,
               };
             }
+          } else if (tab.type === 'cyclic-timer') {
+            // Для циклического таймера уменьшаем время, не опуская ниже 0
+            newTime = Math.max(0, tab.time - 1);
+
+            // Если циклический таймер достиг 0, начинаем процесс циклического сброса
+            if (newTime === 0 && tab.time > 0) { // Проверяем, что таймер только что достиг 0
+              // Проверяем, есть ли уже таймаут для этого таймера
+              if (!this.cyclicTimerTimeouts.has(tab.id)) {
+                // Устанавливаем таймаут на 10 секунд для сброса таймера
+                const timeoutId = setTimeout(() => {
+                  // Находим таймер снова, чтобы получить актуальное состояние
+                  const currentTab = this.tabs.find(t => t.id === tab.id);
+                  if (currentTab && currentTab.isRunning) {
+                    // Сбрасываем таймер к начальному значению (cycleDuration)
+                    const resetTab = {
+                      ...currentTab,
+                      time: currentTab.cycleDuration || 3600, // используем актуальное значение cycleDuration
+                      backgroundColor: currentTab.backgroundColor,
+                    };
+                    
+                    // Обновляем табы
+                    const tabIndex = this.tabs.findIndex(t => t.id === currentTab.id);
+                    if (tabIndex !== -1) {
+                      const updatedTabsAfterReset = [
+                        ...this.tabs.slice(0, tabIndex),
+                        resetTab,
+                        ...this.tabs.slice(tabIndex + 1),
+                      ];
+                      this.tabs = updatedTabsAfterReset;
+                      this.saveTabs();
+                    }
+                  }
+                  // Удаляем таймаут из коллекции
+                  this.cyclicTimerTimeouts.delete(tab.id);
+                }, 10000); // 10 секунд задержка перед сбросом
+                
+                // Сохраняем ID таймаута
+                this.cyclicTimerTimeouts.set(tab.id, timeoutId);
+              }
+            }
+            
+            // Возвращаем таймер с обновленным временем
+            return {
+              ...tab,
+              time: newTime,
+              backgroundColor: tab.backgroundColor,
+            };
           } else if (tab.type === 'countdown') {
             // Для countdown пересчитываем время до целевой даты
             if (tab.targetDateTime) {
               const targetDate = new Date(tab.targetDateTime);
               const now = new Date();
               newTime = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
-              
+
               // Если время истекло, останавливаем таймер
               if (newTime === 0) {
                 return {
@@ -414,7 +508,7 @@ export default class ApplicationController extends Controller {
               }
             }
           }
-          
+
           // Создаем новый объект с обновленным временем, сохраняя цвет фона
           return {
             ...tab,
@@ -438,6 +532,13 @@ export default class ApplicationController extends Controller {
     if (this.timerIntervalId) {
       clearInterval(this.timerIntervalId);
     }
+    
+    // Очищаем все таймауты для циклических таймеров
+    for (const [id, timeoutId] of this.cyclicTimerTimeouts) {
+      clearTimeout(timeoutId);
+    }
+    this.cyclicTimerTimeouts.clear();
+    
     super.willDestroy(...arguments);
   }
 }

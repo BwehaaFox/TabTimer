@@ -204,6 +204,10 @@ body {
   transition: box-shadow 0.3s ease, margin-left 0.3s  ease, transform 0.3s  ease !important;
 }
 
+.tab-item:has(.cyclic-timer-finished) {
+  animation: extraBlink 0.5s ease 0.2s infinite;
+}
+
 .settings-button, .start-stop-button, .delete-button {
   padding: 5px 10px;
   margin: 0 5px;
@@ -253,6 +257,59 @@ body {
 .countdown-finished {
   /* color: #28a745 !important; Зеленый цвет для завершенного обратного отсчета */
 
+}
+
+.cyclic-timer-finished {
+  animation: blink 1s ease 0.3s infinite;
+}
+
+/* Стили для настроек циклического таймера */
+.cyclic-timer-settings {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.cyclic-timer-settings label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.time-input-group input[type="number"] {
+  width: 60px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.time-input-group span {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.current-cycle-time {
+  text-align: center;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.cycle-time-display {
+  font-family: monospace;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #28a745;
 }
 
 @keyframes countdownFinishAnimation {

@@ -30,6 +30,12 @@
               />
             {{else if (eq tab.type "countdown")}}
               <img class="tab-content-icon" src="assets/calendar.svg" alt="" />
+            {{else if (eq tab.type "cyclic-timer")}}
+              <img
+                class="tab-content-icon"
+                src="assets/repeat.svg"
+                alt=""
+              />
             {{else}}
               <img
                 class="tab-content-icon"
@@ -47,6 +53,10 @@
                 (if
                   (and (eq tab.type 'countdown') (eq tab.time 0))
                   'countdown-finished'
+                  (if
+                    (and (eq tab.type 'cyclic-timer') (eq tab.time 0))
+                    'cyclic-timer-finished'
+                  )
                 )
               }}
               {{if
@@ -111,6 +121,12 @@
           >
             Добавить обратный отсчет
           </button>
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "cyclic-timer")}}
+          >
+            Добавить циклический таймер
+          </button>
         </div>
       {{/if}}
       <div
@@ -137,6 +153,7 @@
     @onUpdateTime={{@onUpdateTabTime}}
     @onUpdateBackgroundColor={{@onUpdateTabBackgroundColor}}
     @onUpdateTargetDateTime={{@onUpdateTargetDateTime}}
+    @onUpdateCycleDuration={{@onUpdateTabCycleDuration}}
     @onDelete={{@onDeleteTab}}
   />
 </div>

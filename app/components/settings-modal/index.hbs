@@ -6,7 +6,7 @@
       {{on "click" this.stopPropagation}}
     >
       <div class="modal-header">
-        <h3>{{if (eq @tab.type "timer") "Настройки таймера" (if (eq @tab.type "countdown") "Настройки обратного отсчета" "Настройки секундомера")}}</h3>
+        <h3>{{if (eq @tab.type "timer") "Настройки таймера" (if (eq @tab.type "countdown") "Настройки обратного отсчета" (if (eq @tab.type "cyclic-timer") "Настройки циклического таймера" "Настройки секундомера"))}}</h3>
         <button class="close-button" {{on "click" @onClose}}>×</button>
       </div>
 
@@ -69,6 +69,47 @@
             </div>
           </div>
         {{/unless}}
+
+        {{#if (eq @tab.type "cyclic-timer")}}
+          <div class="cyclic-timer-settings">
+            <label for="cycle-duration">Длительность цикла:</label>
+            <div class="time-input-group">
+              <input
+                type="number"
+                id="cycle-duration-hours"
+                min="0"
+                max="23"
+                placeholder="Часы"
+                value={{this.cycleHours}}
+                {{on "input" this.updateCycleDuration}}
+              />
+              <span>:</span>
+              <input
+                type="number"
+                id="cycle-duration-minutes"
+                min="0"
+                max="59"
+                placeholder="Минуты"
+                value={{this.cycleMinutes}}
+                {{on "input" this.updateCycleDuration}}
+              />
+              <span>:</span>
+              <input
+                type="number"
+                id="cycle-duration-seconds"
+                min="0"
+                max="59"
+                placeholder="Секунды"
+                value={{this.cycleSeconds}}
+                {{on "input" this.updateCycleDuration}}
+              />
+            </div>
+            <div class="current-cycle-time">
+              <strong>Текущая длительность цикла:</strong><br>
+              <span class="cycle-time-display">{{this.formattedCycleTime}}</span>
+            </div>
+          </div>
+        {{/if}}
 
         {{#if (eq @tab.type "countdown")}}
           <div class="countdown-settings">
