@@ -9,6 +9,8 @@ export default class ApplicationController extends Controller {
   @tracked tabs = [];
   @tracked activeSettingsTab = null;
   @tracked showSettingsModal = false;
+  @tracked showConfirmDeleteModal = false;
+  @tracked tabToDelete = null;
 
   timerIntervalId = null;
 
@@ -100,6 +102,26 @@ export default class ApplicationController extends Controller {
   closeSettings() {
     this.showSettingsModal = false;
     this.activeSettingsTab = null;
+  }
+
+  @action
+  openConfirmDeleteModal(tab) {
+    this.tabToDelete = tab;
+    this.showConfirmDeleteModal = true;
+  }
+
+  @action
+  closeConfirmDeleteModal() {
+    this.showConfirmDeleteModal = false;
+    this.tabToDelete = null;
+  }
+
+  @action
+  confirmDeleteTab() {
+    if (this.tabToDelete) {
+      this.deleteTab(this.tabToDelete);
+      this.closeConfirmDeleteModal();
+    }
   }
 
   @action

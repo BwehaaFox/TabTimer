@@ -11,9 +11,17 @@
   @onUpdateTabName={{this.updateTabName}}
   @onUpdateTabTime={{this.updateTabTime}}
   @onDeleteTab={{this.deleteTab}}
+  @onOpenConfirmDeleteModal={{this.openConfirmDeleteModal}}
   @onDragStart={{this.handleDragStart}}
   @onDragOver={{this.handleDragOver}}
   @onDragEnter={{this.handleDragEnter}}
   @onDrop={{this.handleDrop}}
   @onReorderTabs={{this.reorderTabs}}
+/>
+
+<ConfirmDeleteModal
+  @isOpen={{this.showConfirmDeleteModal}}
+  @tab={{this.tabToDelete}}
+  @onConfirm={{this.confirmDeleteTab}}
+  @onCancel={{this.closeConfirmDeleteModal}}
 />

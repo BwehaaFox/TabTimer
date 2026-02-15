@@ -343,3 +343,45 @@ body {
   border: 2px dashed #007bff;
   background-color: rgba(0, 123, 255, 0.1);
 }
+
+/* Стили для модального окна подтверждения удаления */
+.confirm-delete-modal .modal-body {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.confirm-delete-modal .modal-body p {
+  margin: 10px 0;
+  color: #495057;
+}
+
+.confirm-delete-modal .modal-footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
+.confirm-delete-button {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-delete-button:hover {
+  background-color: #c82333;
+}

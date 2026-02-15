@@ -1,0 +1,24 @@
+{{#if @isOpen}}
+  <div class="modal-overlay" {{on "click" this.cancelDelete}} {{mouse-track}}>
+    <div
+      class="modal-content confirm-delete-modal"
+      ...attributes
+      {{on "click" this.stopPropagation}}
+    >
+      <div class="modal-header">
+        <h3>Подтверждение удаления</h3>
+        <button class="close-button" {{on "click" this.cancelDelete}}>×</button>
+      </div>
+
+      <div class="modal-body">
+        <p>Вы уверены, что хотите удалить таймер "{{@tab.name}}"?</p>
+        <p>Это действие нельзя будет отменить.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="cancel-button" {{on "click" this.cancelDelete}}>Отмена</button>
+        <button class="confirm-delete-button" {{on "click" this.confirmDelete}}>Удалить</button>
+      </div>
+    </div>
+  </div>
+{{/if}}
