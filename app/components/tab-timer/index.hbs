@@ -20,21 +20,21 @@
         style="background-color: {{tab.backgroundColor}}"
       >
         <div class="tab-content">
-
+          {{log this.extraClassForFinishedTimer}}
           <span
-            class={{if
-              (and (eq tab.type "timer") (eq tab.time 0))
-              (if
-                this.extraClassForFinishedTimer
-                "tab-time timer-finished extra-finished-timer"
-                "tab-time timer-finished"
-              )
-              (if
-                (and (eq tab.type "countdown") (eq tab.time 0))
-                "tab-time countdown-finished"
-                "tab-time"
-              )
-            }}
+            class="tab-time
+              {{if
+                (and (eq tab.type 'timer') (eq tab.time 0))
+                'timer-finished'
+                (if
+                  (and (eq tab.type 'countdown') (eq tab.time 0))
+                  'countdown-finished'
+                )
+              }}
+              {{if
+                (get this.extraClassForFinishedTimer tab.id)
+                'extra-finished-timer'
+              }}"
           >{{if
               (and (eq tab.type "countdown") (eq tab.time 0))
               "0:00"

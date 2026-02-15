@@ -4,27 +4,27 @@ import { tracked, cached } from '@glimmer/tracking';
 
 export default class TabTimerComponent extends Component {
   @tracked showAddDropdown = false;
-  @tracked extraClassForFinishedTimer = false;
+  @tracked extraClassForFinishedTimer = {};
   @tracked previousTabs = [];
   dropdownTimeoutId = null;
-  finishedTimerTimeoutId = null;
-  
+
   constructor() {
     super(...arguments);
     // Сохраняем начальное состояние табов
     this.previousTabs = this.args.tabs ? [...this.args.tabs] : [];
   }
-  
+
   @action
   checkForTabChanges() {
-    if (this.args.tabs && JSON.stringify(this.args.tabs) !== JSON.stringify(this.previousTabs)) {
+    if (
+      this.args.tabs &&
+      JSON.stringify(this.args.tabs) !== JSON.stringify(this.previousTabs)
+    ) {
       this.checkFinishedTimers(this.previousTabs, this.args.tabs);
       // Обновляем предыдущее состояние
       this.previousTabs = this.args.tabs ? [...this.args.tabs] : [];
     }
   }
-  
-  
 
   formatTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
@@ -59,7 +59,7 @@ export default class TabTimerComponent extends Component {
   @action
   toggleAddDropdown() {
     this.showAddDropdown = !this.showAddDropdown;
-    
+
     if (this.showAddDropdown) {
       // Если выпадающий список открыт, запускаем таймер автозакрытия
       this.startDropdownAutoClose();
@@ -89,7 +89,7 @@ export default class TabTimerComponent extends Component {
     if (this.dropdownTimeoutId) {
       clearTimeout(this.dropdownTimeoutId);
     }
-    
+
     // Устанавливаем таймер на 3 секунды для автозакрытия
     this.dropdownTimeoutId = setTimeout(() => {
       this.showAddDropdown = false;
@@ -139,7 +139,7 @@ export default class TabTimerComponent extends Component {
     // Удаляем визуальные эффекты
     event.target.classList.remove('drag-over');
     const elements = document.querySelectorAll('.tab-item');
-    elements.forEach(el => el.classList.remove('dragging'));
+    elements.forEach((el) => el.classList.remove('dragging'));
 
     const draggedIndex = parseInt(event.dataTransfer.getData('text/plain'));
 
@@ -155,35 +155,42 @@ export default class TabTimerComponent extends Component {
     if (!previousTabs || !currentTabs) {
       return;
     }
-    
+
     // Проверяем каждый таймер на предмет завершения
-    currentTabs.forEach(currentTab => {
-      if ((currentTab.type === 'timer' || currentTab.type === 'countdown') && currentTab.time === 0) {
+    currentTabs.forEach((currentTab) => {
+      if (
+        (currentTab.type === 'timer' || currentTab.type === 'countdown') &&
+        currentTab.time === 0
+      ) {
         // Найдем предыдущее состояние этого таймера
-        const previousTab = previousTabs.find(tab => tab.id === currentTab.id);
-        
+        const previousTab = previousTabs.find(
+          (tab) => tab.id === currentTab.id,
+        );
+
         // Если таймер только что достиг 0 (ранее был больше 0)
         if (previousTab && previousTab.time > 0) {
           // Устанавливаем дополнительный класс для этого таймера
-          this.setExtraClassForFinishedTimer();
+          this.setExtraClassForFinishedTimer(currentTab.id);
         }
       }
     });
   }
 
   // Метод для установки дополнительного класса для завершенного таймера
-  setExtraClassForFinishedTimer() {
-    this.extraClassForFinishedTimer = true;
-    
-    // Очищаем предыдущий таймер, если он был
-    if (this.finishedTimerTimeoutId) {
-      clearTimeout(this.finishedTimerTimeoutId);
-    }
-    
+  setExtraClassForFinishedTimer(currentTab) {
+    console.log(currentTab);
+    this.extraClassForFinishedTimer[currentTab] = true;
+
     // Устанавливаем таймер на 10 секунд для удаления дополнительного класса
-    this.finishedTimerTimeoutId = setTimeout(() => {
-      this.extraClassForFinishedTimer = false;
+    setTimeout(() => {
+      if (this.extraClassForFinishedTimer[currentTab]) {
+        delete this.extraClassForFinishedTimer[currentTab];
+        this.extraClassForFinishedTimer = {
+          ...this.extraClassForFinishedTimer,
+        };
+      }
     }, 10000);
+    this.extraClassForFinishedTimer = { ...this.extraClassForFinishedTimer };
   }
 
   willDestroy() {
@@ -192,13 +199,7 @@ export default class TabTimerComponent extends Component {
       clearTimeout(this.dropdownTimeoutId);
       this.dropdownTimeoutId = null;
     }
-    
-    // Очищаем таймер для дополнительного класса
-    if (this.finishedTimerTimeoutId) {
-      clearTimeout(this.finishedTimerTimeoutId);
-      this.finishedTimerTimeoutId = null;
-    }
-    
+
     super.willDestroy(...arguments);
   }
 }

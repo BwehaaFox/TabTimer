@@ -102,14 +102,16 @@ body {
   backdrop-filter: blur(10px);
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, margin-left 0.3s  ease, transform 0.3s  ease;
   color: white;
   text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.733);
 
   display: inline-flex;
   flex-direction: row;
-  width: min-content;
   position: relative;
+
+  width: calc-size(min-content, size);
+  margin-left: 0;
 
   &:before {
     content: '';
@@ -125,6 +127,8 @@ body {
     z-index: -1;
   }
 }
+
+
 
 .tab-item:hover {
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -152,14 +156,26 @@ body {
   width: calc-size(auto, size);
 }
 
-.tab-item:has(.tab-time), .add-tab-button {
+.tab-item:has(.tab-time) {
+  transition: margin-left 1s 5s ease;
+  margin-left: 0px
+}
+
+ .add-tab-button {
   transition: margin-left 1s 5s ease;
   margin-left: 0px
 }
 
 .tab-item:has(.tab-time:hover), .add-tab-button:hover {
-  transition: margin-left 0s 1s ease;
-  margin-left: -500px
+  transition: margin-left 0s 1s ease !important;
+  margin-left: -500px !important
+}
+
+.tab-item:has(.extra-finished-timer) {
+  animation: blink 1s ease 0.3s infinite;
+  margin-left: 50vw;
+  transform: translateX(-50%);
+  transition: box-shadow 0.3s ease, margin-left 0.3s  ease, transform 0.3s  ease !important;
 }
 
 .settings-button, .start-stop-button, .delete-button {
@@ -201,18 +217,15 @@ body {
 }
 
 .timer-finished {
-  color: #ff6b6b !important; /* Красный цвет для завершенных таймеров */
+
 
 
 }
 
-.extra-finished-timer {
 
-  width: 90vw;
-}
 
 .countdown-finished {
-  color: #28a745 !important; /* Зеленый цвет для завершенного обратного отсчета */
+  /* color: #28a745 !important; Зеленый цвет для завершенного обратного отсчета */
 
 }
 
