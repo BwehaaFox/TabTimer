@@ -7,12 +7,18 @@ export default class SettingsModalComponent extends Component {
   @service storage;
 
   @tracked currentTime = null;
+  @tracked selectedColor = null;
 
   constructor() {
     super(...arguments);
     // Устанавливаем начальное время при создании компонента, проверяя наличие tab
     this.currentTime = this.args.tab ? this.args.tab.time : 0;
     
+    // Устанавливаем начальный цвет фона, извлекая его из rgba в hex формат
+    if (this.args.tab && this.args.tab.backgroundColor) {
+      this.selectedColor = this.rgbaToHex(this.args.tab.backgroundColor);
+    }
+
     // Запускаем интервал для обновления времени
     this.startUpdatingTime();
   }
@@ -112,6 +118,44 @@ export default class SettingsModalComponent extends Component {
       return `${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     } else {
       return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+  }
+
+  rgbaToHex(rgba) {
+    // Извлекаем значения r, g, b из строки rgba(r, g, b, a)
+    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+    if (!match) return '#ffffff'; // возвращаем белый цвет по умолчанию
+    
+    const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
+    const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
+    const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
+    
+    return `#${r}${g}${b}`;
+  }
+
+  hexToRgba(hex, alpha = 0.4) {
+    // Убираем # если он есть
+    const cleanHex = hex.replace('#', '');
+    
+    // Разбиваем на компоненты
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  @action
+  updateBackgroundColor(event) {
+    const newHexColor = event.target.value;
+    this.selectedColor = newHexColor;
+    
+    // Преобразуем hex в rgba с прозрачностью 0.4
+    const newRgbaColor = this.hexToRgba(newHexColor, 0.4);
+    
+    // Вызываем внешний обработчик для обновления цвета фона таймера
+    if (this.args.onUpdateBackgroundColor) {
+      this.args.onUpdateBackgroundColor(this.args.tab, newRgbaColor);
     }
   }
 }

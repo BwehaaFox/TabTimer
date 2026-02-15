@@ -31,12 +31,23 @@ export default class ApplicationController extends Controller {
   loadTabs() {
     const savedTabs = this.storage.getItem('tabtimer-tabs');
     if (savedTabs) {
-      this.tabs = savedTabs.map((tab) => ({
-        ...tab,
-        isRunning: typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
-        time: tab.time || 0,
-        backgroundColor: tab.backgroundColor || this.getRandomBackgroundColor(),
-      }));
+      this.tabs = savedTabs.map((tab) => {
+        // Проверяем, нужно ли обновить прозрачность у существующего цвета
+        let backgroundColor = tab.backgroundColor;
+        
+        // Если цвет существует, но не содержит правильную прозрачность (0.4), 
+        // преобразуем его в нужный формат
+        if (backgroundColor && !this.hasProperTransparency(backgroundColor)) {
+          backgroundColor = this.convertToProperTransparency(backgroundColor);
+        }
+        
+        return {
+          ...tab,
+          isRunning: typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
+          time: tab.time || 0,
+          backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
+        };
+      });
     } else {
       this.tabs = [];
     }
@@ -116,6 +127,27 @@ export default class ApplicationController extends Controller {
     this.tabToDelete = null;
   }
 
+  hasProperTransparency(rgbaString) {
+    // Проверяем, заканчивается ли строка на ', 0.4)' или ',0.4)'
+    const trimmed = rgbaString.trim();
+    return trimmed.endsWith(', 0.4)') || trimmed.endsWith(',0.4)');
+  }
+
+  convertToProperTransparency(rgbaString) {
+    // Извлекаем значения r, g, b из строки rgba(r, g, b, a)
+    const match = rgbaString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+    if (!match) {
+      // Если строка не соответствует формату rgba, возвращаем случайный цвет
+      return this.getRandomBackgroundColor();
+    }
+    
+    const r = parseInt(match[1], 10);
+    const g = parseInt(match[2], 10);
+    const b = parseInt(match[3], 10);
+    
+    return `rgba(${r}, ${g}, ${b}, 0.4)`;
+  }
+
   @action
   confirmDeleteTab() {
     if (this.tabToDelete) {
@@ -156,6 +188,25 @@ export default class ApplicationController extends Controller {
         ...tab,
         time: newTime,
         backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+      this.activeSettingsTab = updatedTab;
+      this.saveTabs();
+    }
+  }
+
+  @action
+  updateTabBackgroundColor(tab, backgroundColor) {
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      const updatedTab = {
+        ...tab,
+        backgroundColor: backgroundColor,
       };
       const updatedTabs = [
         ...this.tabs.slice(0, tabIndex),

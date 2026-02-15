@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
+
 export default class TabTimerComponent extends Component {
   formatTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);

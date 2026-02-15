@@ -75,6 +75,14 @@
           placeholder="Введите название таймера"
           {{on "input" this.updateName}}
         />
+
+        <label for="tab-bg-color">Цвет фона:</label>
+        <input
+          id="tab-bg-color"
+          type="color"
+          value={{this.selectedColor}}
+          {{on "change" this.updateBackgroundColor}}
+        />
       </div>
 
       <div class="modal-footer">
