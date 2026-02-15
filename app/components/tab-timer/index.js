@@ -1,10 +1,30 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
-import { tracked } from '@glimmer/tracking';
+import { tracked, cached } from '@glimmer/tracking';
 
 export default class TabTimerComponent extends Component {
   @tracked showAddDropdown = false;
+  @tracked extraClassForFinishedTimer = false;
+  @tracked previousTabs = [];
   dropdownTimeoutId = null;
+  finishedTimerTimeoutId = null;
+  
+  constructor() {
+    super(...arguments);
+    // Сохраняем начальное состояние табов
+    this.previousTabs = this.args.tabs ? [...this.args.tabs] : [];
+  }
+  
+  @action
+  checkForTabChanges() {
+    if (this.args.tabs && JSON.stringify(this.args.tabs) !== JSON.stringify(this.previousTabs)) {
+      this.checkFinishedTimers(this.previousTabs, this.args.tabs);
+      // Обновляем предыдущее состояние
+      this.previousTabs = this.args.tabs ? [...this.args.tabs] : [];
+    }
+  }
+  
+  
 
   formatTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
@@ -129,12 +149,56 @@ export default class TabTimerComponent extends Component {
     }
   }
 
+  // Метод для проверки завершенных таймеров
+  checkFinishedTimers(previousTabs, currentTabs) {
+    // Проверяем, что оба массива определены
+    if (!previousTabs || !currentTabs) {
+      return;
+    }
+    
+    // Проверяем каждый таймер на предмет завершения
+    currentTabs.forEach(currentTab => {
+      if (currentTab.type === 'timer' && currentTab.time === 0) {
+        // Найдем предыдущее состояние этого таймера
+        const previousTab = previousTabs.find(tab => tab.id === currentTab.id);
+        
+        // Если таймер только что достиг 0 (ранее был больше 0)
+        if (previousTab && previousTab.time > 0) {
+          // Устанавливаем дополнительный класс для этого таймера
+          this.setExtraClassForFinishedTimer();
+        }
+      }
+    });
+  }
+
+  // Метод для установки дополнительного класса для завершенного таймера
+  setExtraClassForFinishedTimer() {
+    this.extraClassForFinishedTimer = true;
+    
+    // Очищаем предыдущий таймер, если он был
+    if (this.finishedTimerTimeoutId) {
+      clearTimeout(this.finishedTimerTimeoutId);
+    }
+    
+    // Устанавливаем таймер на 10 секунд для удаления дополнительного класса
+    this.finishedTimerTimeoutId = setTimeout(() => {
+      this.extraClassForFinishedTimer = false;
+    }, 10000);
+  }
+
   willDestroy() {
     // Очищаем таймер при уничтожении компонента
     if (this.dropdownTimeoutId) {
       clearTimeout(this.dropdownTimeoutId);
       this.dropdownTimeoutId = null;
     }
+    
+    // Очищаем таймер для дополнительного класса
+    if (this.finishedTimerTimeoutId) {
+      clearTimeout(this.finishedTimerTimeoutId);
+      this.finishedTimerTimeoutId = null;
+    }
+    
     super.willDestroy(...arguments);
   }
 }

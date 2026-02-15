@@ -1,3 +1,4 @@
+{{! template-lint-disable no-unused-vars }}
 <div class="tab-timer-wrapper">
   {{!-- <div class="add-tab-zone" ...attributes>
     <div class="add-tab-button hidden-until-hover" {{on "click" @onAddTab}}>
@@ -23,7 +24,7 @@
           <span
             class={{if
               (and (eq tab.type "timer") (eq tab.time 0))
-              "tab-time timer-finished"
+              (if this.extraClassForFinishedTimer "tab-time timer-finished extra-finished-timer" "tab-time timer-finished")
               "tab-time"
             }}
           >{{this.formatTime tab.time}}</span>
@@ -83,6 +84,11 @@
       </div>
     </div>
   </div>
+
+
+
+  <!-- Элемент для отслеживания изменений в табах -->
+  <div {{did-update this.checkForTabChanges @tabs}} style="display: none;"></div>
 
   <SettingsModal
     @isOpen={{@showSettingsModal}}

@@ -205,10 +205,22 @@ body {
   animation: blink 1s infinite; /* Мигание для привлечения внимания */
 }
 
+.extra-finished-timer {
+  animation: extraBlink 0.5s 10; /* Более интенсивное мигание в течение 5 секунд (10 раз по 0.5с) */
+  transform: scale(1.1); /* Небольшое увеличение для привлечения внимания */
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7); /* Красная тень */
+}
+
 @keyframes blink {
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+@keyframes extraBlink {
+  0% { opacity: 1; transform: scale(1.1); }
+  50% { opacity: 0.3; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1.1); }
 }
 
 /* Стили для модального окна */
