@@ -160,6 +160,77 @@ export default class ApplicationController extends Controller {
     }
   }
 
+  @action
+  reorderTabs(fromIndex, toIndex) {
+    if (fromIndex === toIndex) {
+      return; // Если индексы совпадают, ничего не делаем
+    }
+
+    const updatedTabs = [...this.tabs]; // Создаем копию массива
+    const [movedTab] = updatedTabs.splice(fromIndex, 1); // Удаляем элемент из старой позиции
+    updatedTabs.splice(toIndex, 0, movedTab); // Вставляем в новую позицию
+
+    this.tabs = updatedTabs; // Обновляем tracked свойство
+    this.saveTabs(); // Сохраняем изменения
+  }
+
+  @action
+  handleDragStart(index, event) {
+    // Вызов метода из компонента
+    return this.handleDragStartFromComponent(index, event);
+  }
+
+  @action
+  handleDragOver(index, event) {
+    // Вызов метода из компонента
+    return this.handleDragOverFromComponent(index, event);
+  }
+
+  @action
+  handleDragEnter(index, event) {
+    // Вызов метода из компонента
+    return this.handleDragEnterFromComponent(index, event);
+  }
+
+  @action
+  handleDrop(index, event) {
+    // Вызов метода из компонента
+    return this.handleDropFromComponent(index, event);
+  }
+
+  // Внутренние методы для обработки событий перетаскивания
+  handleDragStartFromComponent(index, event) {
+    event.dataTransfer.setData('text/plain', index);
+    event.dataTransfer.effectAllowed = 'move';
+    // Добавляем визуальный эффект для элемента, который перетаскивается
+    event.target.classList.add('dragging');
+  }
+
+  handleDragOverFromComponent(index, event) {
+    event.preventDefault(); // Необходимо для разрешения drop
+    event.dataTransfer.dropEffect = 'move';
+  }
+
+  handleDragEnterFromComponent(index, event) {
+    event.preventDefault();
+    // Добавляем класс для визуального индикатора места, куда можно сбросить
+    event.target.classList.add('drag-over');
+  }
+
+  handleDropFromComponent(index, event) {
+    event.preventDefault();
+    
+    // Удаляем визуальные эффекты
+    event.target.classList.remove('drag-over');
+    const elements = document.querySelectorAll('.tab-item');
+    elements.forEach(el => el.classList.remove('dragging'));
+    
+    const draggedIndex = parseInt(event.dataTransfer.getData('text/plain'));
+    
+    // Вызываем действие для обновления порядка
+    this.reorderTabs(draggedIndex, index);
+  }
+
   saveTabs() {
     this.storage.setItem('tabtimer-tabs', this.tabs);
   }

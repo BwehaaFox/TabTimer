@@ -30,4 +30,48 @@ export default class TabTimerComponent extends Component {
     const randomIndex = Math.floor(Math.random() * colors.length);
     return colors[randomIndex];
   }
+
+  @action
+  handleDragStart(index, event) {
+    event.dataTransfer.setData('text/plain', index);
+    event.dataTransfer.effectAllowed = 'move';
+    // Добавляем визуальный эффект для элемента, который перетаскивается
+    event.target.classList.add('dragging');
+  }
+
+  @action
+  handleDragOver(index, event) {
+    event.preventDefault(); // Необходимо для разрешения drop
+    event.dataTransfer.dropEffect = 'move';
+  }
+
+  @action
+  handleDragEnter(index, event) {
+    event.preventDefault();
+    // Добавляем класс для визуального индикатора места, куда можно сбросить
+    event.target.classList.add('drag-over');
+  }
+
+  @action
+  handleDragLeave(index, event) {
+    // Удаляем класс при выходе из элемента
+    event.target.classList.remove('drag-over');
+  }
+
+  @action
+  handleDrop(index, event) {
+    event.preventDefault();
+    
+    // Удаляем визуальные эффекты
+    event.target.classList.remove('drag-over');
+    const elements = document.querySelectorAll('.tab-item');
+    elements.forEach(el => el.classList.remove('dragging'));
+    
+    const draggedIndex = parseInt(event.dataTransfer.getData('text/plain'));
+    
+    // Вызываем внешнее действие для обновления порядка
+    if (typeof this.args.onReorderTabs === 'function') {
+      this.args.onReorderTabs(draggedIndex, index);
+    }
+  }
 }

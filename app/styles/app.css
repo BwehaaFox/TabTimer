@@ -332,3 +332,14 @@ body {
   background-color: #e0a800;
   border-color: #d39e00;
 }
+
+/* Стили для перетаскивания */
+.tab-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.tab-item.drag-over {
+  border: 2px dashed #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}

@@ -6,9 +6,15 @@
   </div> --}}
 
   <div class="tabs-container">
-    {{#each @tabs key=@index as |tab|}}
+    {{#each @tabs key=@index as |tab index|}}
       <div
         class="tab-item"
+        draggable="true"
+        {{on "dragstart" (fn this.handleDragStart index)}}
+        {{on "dragover" (fn this.handleDragOver index)}}
+        {{on "drop" (fn this.handleDrop index)}}
+        {{on "dragenter" (fn this.handleDragEnter index)}}
+        {{on "dragleave" (fn this.handleDragLeave index)}}
         {{mouse-track}}
         style="background-color: {{tab.backgroundColor}}"
       >
