@@ -13,25 +13,26 @@ if (process.argv.includes('--dev')) {
 
 function createWindow() {
   // Получаем размеры экрана
-  const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-  
+  const { width, height } =
+    require('electron').screen.getPrimaryDisplay().workAreaSize;
+
   mainWindow = new BrowserWindow({
     width: width,
     height: height,
     x: 0,
     y: 0,
-    transparent: true,           // Окно прозрачное
-    frame: false,                // Без рамки
-    alwaysOnTop: true,           // Поверх всех окон
-    resizable: false,            // Нельзя изменять размер
-    skipTaskbar: true,           // Не показывать в панели задач
+    transparent: true, // Окно прозрачное
+    frame: false, // Без рамки
+    alwaysOnTop: true, // Поверх всех окон
+    resizable: false, // Нельзя изменять размер
+    skipTaskbar: true, // Не показывать в панели задач
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
     },
     icon: path.join(__dirname, '../electron/assets/icon.png'), // Путь к иконке
-    hasShadow: false             // Убираем тень окна
+    hasShadow: false, // Убираем тень окна
   });
 
   // Загружаем локальный файл или dev сервер
@@ -43,14 +44,14 @@ function createWindow() {
 
   // Делаем окно кликабельным только в области .tabs-container
   mainWindow.setBackgroundColor('#00FFFFFF'); // Полностью прозрачный фон
-  
+
   // Убираем возможность выделения и скроллинга за пределами нужной области
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.webContents.insertCSS(`
       body {
         -webkit-user-select: none;
       }
-      
+
       /* Создаем прозрачный слой для перетаскивания окна */
       .tab-timer-container::before {
         content: '';
@@ -62,7 +63,7 @@ function createWindow() {
         -webkit-app-region: drag;
         z-index: 1;
       }
-      
+
       /* Поднимаем интерактивные элементы над слоем перетаскивания */
       .tabs-container,
       .tab-item,
@@ -78,7 +79,8 @@ function createWindow() {
   });
 
   // Игнорировать события мыши и пересылать их окнам ниже
-  mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  // mainWindow.setIgnoreMouseEvents(true, { forward: true });
+  // mainWindow.setFocusable(false);
 
   // Скрываем окно при закрытии, а не уничтожаем
   mainWindow.on('closed', () => {
@@ -88,19 +90,19 @@ function createWindow() {
 
 function createTray() {
   tray = new Tray(path.join(__dirname, '../electron/assets/icon.png')); // Путь к иконке
-  
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Закрыть приложение',
       click: () => {
         app.quit();
-      }
-    }
+      },
+    },
   ]);
-  
+
   tray.setContextMenu(contextMenu);
   tray.setToolTip('TabTimer');
-  
+
   // При правом клике показываем контекстное меню
   tray.on('right-click', () => {
     tray.popUpContextMenu();
@@ -122,4 +124,13 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+  const webContents = event.sender;
+  const win = BrowserWindow.fromWebContents(webContents);
+
+  // Важно: на Windows/macOS используем forward: true,
+  // чтобы события наведения всё равно приходили в JS
+  win.setIgnoreMouseEvents(ignore, options);
 });

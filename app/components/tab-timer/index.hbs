@@ -7,7 +7,12 @@
 
   <div class="tabs-container">
     {{#each @tabs key=@index as |tab|}}
-      <div class="tab-item" style="background-color: {{tab.backgroundColor}}">
+      <div
+        class="tab-item"
+        {{on "mouseenter" this.onEnter}}
+        {{on "mouseleave" this.onLeave}}
+        style="background-color: {{tab.backgroundColor}}"
+      >
         <div class="tab-content">
 
           <span class="tab-time">{{this.formatTime tab.time}}</span>
