@@ -14,6 +14,13 @@ export default class ApplicationController extends Controller {
 
   constructor() {
     super(...arguments);
+
+    if (!window.electronAPI?.setIgnoreMouse) {
+      window.electronAPI = {
+        setIgnoreMouse: () => {},
+      };
+    }
+
     window.electronAPI.setIgnoreMouse(true, { forward: true });
     this.loadTabs();
     this.startTimerLoop();
@@ -116,6 +123,26 @@ export default class ApplicationController extends Controller {
         this.activeSettingsTab = updatedTab;
         this.saveTabs();
       }
+    }
+  }
+
+  @action
+  updateTabTime(tab, newTime) {
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      const updatedTab = {
+        ...tab,
+        time: newTime,
+        backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+      this.activeSettingsTab = updatedTab;
+      this.saveTabs();
     }
   }
 

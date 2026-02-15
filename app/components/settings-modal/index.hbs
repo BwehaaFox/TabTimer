@@ -11,6 +11,54 @@
       </div>
 
       <div class="modal-body">
+        <div class="time-adjustment">
+          <div class="time-display">
+
+            <button
+              class="adjust-time-btn minus-hour"
+              disabled={{this.minusHourDisabled}}
+              {{on "click" (fn this.adjustTime -3600)}}
+            >
+              Ч
+            </button>
+            <button
+              class="adjust-time-btn minus-minute"
+              disabled={{this.minusMinuteDisabled}}
+              {{on "click" (fn this.adjustTime -60)}}
+            >
+              М
+            </button>
+            <button
+              class="adjust-time-btn minus-one"
+              disabled={{this.minusOneDisabled}}
+              {{on "click" (fn this.adjustTime -1)}}
+            >
+              С
+            </button>
+
+            <span class="current-time">{{this.formattedTime}}</span>
+
+            <button
+              class="adjust-time-btn plus-one"
+              {{on "click" (fn this.adjustTime 1)}}
+            >
+              С
+            </button>
+            <button
+              class="adjust-time-btn plus-minute"
+              {{on "click" (fn this.adjustTime 60)}}
+            >
+              М
+            </button>
+            <button
+              class="adjust-time-btn plus-hour"
+              {{on "click" (fn this.adjustTime 3600)}}
+            >
+              Ч
+            </button>
+          </div>
+        </div>
+
         <label for="tab-name">Название:</label>
         <Input
           id="tab-name"

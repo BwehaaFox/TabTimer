@@ -1,13 +1,14 @@
 {{page-title "TabTimer"}}
 
-<TabTimer 
-  @tabs={{this.tabs}} 
-  @onAddTab={{this.addTab}} 
-  @onToggleTimer={{this.toggleTimer}} 
-  @onOpenSettings={{this.openSettings}} 
+<TabTimer
+  @tabs={{this.tabs}}
+  @onAddTab={{this.addTab}}
+  @onToggleTimer={{this.toggleTimer}}
+  @onOpenSettings={{this.openSettings}}
   @showSettingsModal={{this.showSettingsModal}}
   @activeSettingsTab={{this.activeSettingsTab}}
   @onCloseSettings={{this.closeSettings}}
   @onUpdateTabName={{this.updateTabName}}
+  @onUpdateTabTime={{this.updateTabTime}}
   @onDeleteTab={{this.deleteTab}}
 />

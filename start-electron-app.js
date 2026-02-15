@@ -6,7 +6,7 @@ console.log('Запуск сервера Ember и Electron...');
 // Запускаем сервер Ember
 const emberServer = spawn('yarn', ['start'], {
   cwd: __dirname,
-  shell: true
+  shell: true,
 });
 
 let emberReady = false;
@@ -14,9 +14,12 @@ let emberReady = false;
 emberServer.stdout.on('data', (data) => {
   const output = data.toString();
   console.log(`Ember: ${output}`);
-  
+
   // Проверяем, готов ли сервер Ember
-  if (output.includes('Build successful') && output.includes('Serving on http://localhost:4201/')) {
+  if (
+    output.includes('Build successful') &&
+    output.includes('Serving on http://localhost')
+  ) {
     emberReady = true;
     console.log('Сервер Ember готов, запускаем Electron...');
     startElectron();
@@ -36,11 +39,11 @@ let electronStarted = false;
 function startElectron() {
   if (!electronStarted && emberReady) {
     electronStarted = true;
-    
+
     // Запускаем Electron
     const electronApp = spawn('yarn', ['electron-dev'], {
       cwd: __dirname,
-      shell: true
+      shell: true,
     });
 
     electronApp.stdout.on('data', (data) => {
@@ -75,7 +78,7 @@ function checkEmberServer() {
     host: 'localhost',
     port: 4201,
     path: '/',
-    timeout: 2000
+    timeout: 2000,
   };
 
   const request = http.request(options, (res) => {
