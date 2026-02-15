@@ -108,6 +108,17 @@ function createTray() {
   tray.on('right-click', () => {
     tray.popUpContextMenu();
   });
+
+  // При клике на иконку в трее восстанавливаем фокус на приложение
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
 }
 
 app.whenReady().then(() => {
