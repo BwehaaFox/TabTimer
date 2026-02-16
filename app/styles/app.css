@@ -197,15 +197,18 @@ body {
   }
 
 
-.tab-item:has(.extra-finished-timer) {
-  animation: blink 1s ease 0.3s infinite;
+.tab-item:has(.extra-finished-timer), .tab-item:has(.cyclic-timer-finished) {
+  position: fixed;
+  animation: extra-blink 0.5s ease 0.2s infinite;
   margin-left: 50vw;
-  transform: translateX(-50%);
-  transition: box-shadow 0.3s ease, margin-left 0.3s  ease, transform 0.3s  ease !important;
+  transform: translateX(-50%) translateY(400%);
+  transition: all 0.3s ease !important;
 }
 
-.tab-item:has(.cyclic-timer-finished) {
-  animation: extraBlink 0.5s ease 0.2s infinite;
+@keyframes extra-blink {
+  0% { opacity: 1; transform: translateX(-50%) scale(2.5) translateY(400%) scale(1.1); }
+  50% { opacity: 0.3; transform: translateX(-50%) scale(2.5) translateY(400%) scale(1.2); }
+  100% { opacity: 1; transform: translateX(-50%) scale(2.5) translateY(400%) scale(1.1); }
 }
 
 .settings-button, .start-stop-button, .delete-button {

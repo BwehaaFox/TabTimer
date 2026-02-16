@@ -102,8 +102,8 @@ function createWindow() {
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
 
   // Устанавливаем приоритет окна "поверх всех" с более высоким уровнем
-  mainWindow.setAlwaysOnTop(true, 'floating');
-
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // mainWindow.setFocusable(false);
 
   // Скрываем окно при закрытии, а не уничтожаем
@@ -116,19 +116,19 @@ function createWindow() {
     // Когда окно теряет фокус, через короткое время снова устанавливаем его поверх
     setTimeout(() => {
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setAlwaysOnTop(true, 'floating');
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
       }
     }, 100);
   });
 
   // startMouseTracking();
 
-  // Установим интервал для периодической проверки, что окно остается поверх других
-  setInterval(() => {
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-      mainWindow.setAlwaysOnTop(true, 'floating');
-    }
-  }, 2000); // Проверяем каждые 2 секунды
+  // // Установим интервал для периодической проверки, что окно остается поверх других
+  // setInterval(() => {
+  //   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+  //     mainWindow.setAlwaysOnTop(true, 'floating');
+  //   }
+  // }, 2000); // Проверяем каждые 2 секунды
 }
 
 function createTray() {
@@ -160,7 +160,7 @@ function createTray() {
       mainWindow.show();
       mainWindow.focus();
       // Убедимся, что окно остается поверх других
-      mainWindow.setAlwaysOnTop(true, 'floating');
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
     }
   });
 }
