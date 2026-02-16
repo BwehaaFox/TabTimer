@@ -2,6 +2,26 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, screen } = require('electron');
 const path = require('path');
 const url = require('url');
 
+// Запрос блокировки одиночного экземпляра приложения
+const gotTheLock = app.requestSingleInstanceLock();
+
+// Если не удалось получить блокировку, значит уже запущен другой экземпляр
+if (!gotTheLock) {
+  app.quit();
+  return; // Немедленно завершаем выполнение скрипта
+}
+
+// Если это первый экземпляр, слушаем попытку запуска второго
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Если кто-то пытается запустить второй экземпляр, фокусируем первое окно
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+  }
+});
+
 let mainWindow;
 let tray = null;
 let isDev = false;
