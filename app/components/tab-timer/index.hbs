@@ -36,6 +36,12 @@
                 src="assets/repeat.svg"
                 alt=""
               />
+            {{else if (eq tab.type "cyclic-time")}}
+              <img
+                class="tab-content-icon"
+                src="assets/clock.svg"
+                alt=""
+              />
             {{else}}
               <img
                 class="tab-content-icon"
@@ -56,6 +62,10 @@
                   (if
                     (and (eq tab.type 'cyclic-timer') (eq tab.time 0))
                     'cyclic-timer-finished'
+                    (if
+                      (and (eq tab.type 'cyclic-time') (eq tab.time 0))
+                      'cyclic-time-finished'
+                    )
                   )
                 )
               }}
@@ -70,7 +80,7 @@
             }}</span>
           <div class="tab-content__hovered">
             <span class="tab-name">{{if tab.name tab.name ""}}</span>
-            {{#unless (eq tab.type "countdown")}}
+            {{#unless (or (eq tab.type "countdown") (eq tab.type "cyclic-time"))}}
               <button
                 class="start-stop-button"
                 {{on "click" (fn @onToggleTimer tab)}}
@@ -127,6 +137,12 @@
           >
             Добавить циклический таймер
           </button>
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "cyclic-time")}}
+          >
+            Добавить циклический таймер от времени
+          </button>
         </div>
       {{/if}}
       <div
@@ -154,6 +170,7 @@
     @onUpdateBackgroundColor={{@onUpdateTabBackgroundColor}}
     @onUpdateTargetDateTime={{@onUpdateTargetDateTime}}
     @onUpdateCycleDuration={{@onUpdateTabCycleDuration}}
+    @onUpdateTargetTimeOfDay={{@onUpdateTargetTimeOfDay}}
     @onDelete={{@onDeleteTab}}
   />
 </div>

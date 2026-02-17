@@ -51,6 +51,7 @@ export default class ApplicationController extends Controller {
           time: tab.time || 0,
           cycleDuration: tab.cycleDuration || (tab.type === 'cyclic-timer' ? 3600 : undefined), // Устанавливаем длительность цикла по умолчанию для циклических таймеров
           targetDateTime: tab.targetDateTime || null, // Добавляем целевую дату и время для countdown
+          targetTimeOfDay: tab.targetTimeOfDay || null, // Добавляем целевое время суток для cyclic-time
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
       });
@@ -77,6 +78,19 @@ export default class ApplicationController extends Controller {
       // Для циклического таймера устанавливаем 1 час по умолчанию
       initialTime = 3600; // 1 час в секундах
       isRunning = false;
+    } else if (type === 'cyclic-time') {
+      // Для циклического таймера от времени суток
+      const now = new Date();
+      const targetTime = new Date();
+      targetTime.setHours(12, 0, 0, 0); // По умолчанию 12:00
+      
+      // Если время уже прошло сегодня, считаем время до завтра
+      if (targetTime.getTime() <= now.getTime()) {
+        targetTime.setDate(targetTime.getDate() + 1);
+      }
+      
+      initialTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+      isRunning = true; // cyclic-time всегда запущен
     } else {
       // Для stopwatch
       initialTime = 0;
@@ -91,6 +105,7 @@ export default class ApplicationController extends Controller {
       type: type,
       cycleDuration: type === 'cyclic-timer' ? 3600 : undefined, // Длительность цикла по умолчанию 1 час для циклического таймера
       targetDateTime: type === 'countdown' ? new Date(Date.now() + 86400000).toISOString() : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
+      targetTimeOfDay: type === 'cyclic-time' ? '12:00' : null, // Устанавливаем время суток по умолчанию 12:00 для cyclic-time
       backgroundColor: this.getRandomBackgroundColor(),
     };
     this.tabs = [...this.tabs, newTab];
@@ -121,16 +136,16 @@ export default class ApplicationController extends Controller {
     if (tabIndex !== -1) {
       const isCurrentlyRunning = tab.isRunning;
       const newIsRunningState = !isCurrentlyRunning;
-      
-      // Если останавливаем циклический таймер, очищаем его таймаут
-      if (tab.type === 'cyclic-timer' && isCurrentlyRunning && !newIsRunningState) {
+
+      // Если останавливаем циклический таймер или cyclic-time, очищаем его таймаут
+      if ((tab.type === 'cyclic-timer' || tab.type === 'cyclic-time') && isCurrentlyRunning && !newIsRunningState) {
         if (this.cyclicTimerTimeouts.has(tab.id)) {
           const timeoutId = this.cyclicTimerTimeouts.get(tab.id);
           clearTimeout(timeoutId);
           this.cyclicTimerTimeouts.delete(tab.id);
         }
       }
-      
+
       const updatedTab = {
         ...tab,
         isRunning: newIsRunningState,
@@ -324,15 +339,69 @@ export default class ApplicationController extends Controller {
   }
 
   @action
+  updateTabTargetTimeOfDay(tab, targetTimeOfDay) {
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      // Рассчитываем новое время на основе нового времени суток
+      const now = new Date();
+      const [hours, minutes] = targetTimeOfDay.split(':').map(Number);
+      const targetTime = new Date();
+      targetTime.setHours(hours, minutes, 0, 0);
+
+      // Если время уже прошло сегодня, считаем время до завтра
+      if (targetTime.getTime() <= now.getTime()) {
+        targetTime.setDate(targetTime.getDate() + 1);
+      }
+
+      const newTime = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+
+      // Создаём новый объект с обновлёнными значениями
+      const updatedTab = {
+        id: tab.id,
+        name: tab.name,
+        time: newTime,
+        isRunning: true, // cyclic-time всегда запущен
+        type: 'cyclic-time',
+        targetTimeOfDay: targetTimeOfDay,
+        backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+
+      // Обновляем activeSettingsTab, если он соответствует изменяемому табу
+      if (this.activeSettingsTab && this.activeSettingsTab.id === tab.id) {
+        this.activeSettingsTab = updatedTab;
+      }
+
+      this.saveTabs();
+      
+      // Перезапускаем timerLoop, чтобы он использовал актуальное значение targetTimeOfDay
+      this.restartTimerLoop();
+    }
+  }
+
+  restartTimerLoop() {
+    if (this.timerIntervalId) {
+      clearInterval(this.timerIntervalId);
+      this.timerIntervalId = null;
+    }
+    this.startTimerLoop();
+  }
+
+  @action
   deleteTab(tabToDelete) {
     if (tabToDelete) {
-      // Если удаляемый таймер является циклическим и имеет активный таймаут, очищаем его
+      // Если удаляемый таймер является циклическим или cyclic-time и имеет активный таймаут, очищаем его
       if (this.cyclicTimerTimeouts.has(tabToDelete.id)) {
         const timeoutId = this.cyclicTimerTimeouts.get(tabToDelete.id);
         clearTimeout(timeoutId);
         this.cyclicTimerTimeouts.delete(tabToDelete.id);
       }
-      
+
       this.tabs = this.tabs.filter((tab) => tab.id !== tabToDelete.id);
       if (
         this.activeSettingsTab &&
@@ -462,7 +531,7 @@ export default class ApplicationController extends Controller {
                       time: currentTab.cycleDuration || 3600, // используем актуальное значение cycleDuration
                       backgroundColor: currentTab.backgroundColor,
                     };
-                    
+
                     // Обновляем табы
                     const tabIndex = this.tabs.findIndex(t => t.id === currentTab.id);
                     if (tabIndex !== -1) {
@@ -478,16 +547,17 @@ export default class ApplicationController extends Controller {
                   // Удаляем таймаут из коллекции
                   this.cyclicTimerTimeouts.delete(tab.id);
                 }, 10000); // 10 секунд задержка перед сбросом
-                
+
                 // Сохраняем ID таймаута
                 this.cyclicTimerTimeouts.set(tab.id, timeoutId);
               }
             }
-            
+
             // Возвращаем таймер с обновленным временем
             return {
               ...tab,
               time: newTime,
+              cycleDuration: tab.cycleDuration,
               backgroundColor: tab.backgroundColor,
             };
           } else if (tab.type === 'countdown') {
@@ -503,9 +573,42 @@ export default class ApplicationController extends Controller {
                   ...tab,
                   isRunning: false,
                   time: newTime,
+                  targetDateTime: tab.targetDateTime,
                   backgroundColor: tab.backgroundColor,
                 };
               }
+              
+              return {
+                ...tab,
+                time: newTime,
+                targetDateTime: tab.targetDateTime,
+                isRunning: true,
+                backgroundColor: tab.backgroundColor,
+              };
+            }
+          } else if (tab.type === 'cyclic-time') {
+            // Для cyclic-time пересчитываем время до целевого времени суток
+            if (tab.targetTimeOfDay) {
+              const now = new Date();
+              const [hours, minutes] = tab.targetTimeOfDay.split(':').map(Number);
+              const targetTime = new Date();
+              targetTime.setHours(hours, minutes, 0, 0);
+
+              // Если время уже прошло сегодня, считаем время до завтра
+              if (targetTime.getTime() <= now.getTime()) {
+                targetTime.setDate(targetTime.getDate() + 1);
+              }
+
+              newTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+
+              // cyclic-time всегда запущен и циклично перезапускается
+              return {
+                ...tab,
+                time: newTime,
+                isRunning: true,
+                targetTimeOfDay: tab.targetTimeOfDay,
+                backgroundColor: tab.backgroundColor,
+              };
             }
           }
 

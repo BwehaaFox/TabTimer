@@ -6,11 +6,34 @@
       {{on "click" this.stopPropagation}}
     >
       <div class="modal-header">
-        <h3>{{if (eq @tab.type "timer") "Настройки таймера" (if (eq @tab.type "countdown") "Настройки обратного отсчета" (if (eq @tab.type "cyclic-timer") "Настройки циклического таймера" "Настройки секундомера"))}}</h3>
+        <h3>{{if
+            (eq @tab.type "timer")
+            "Таймер"
+            (if
+              (eq @tab.type "countdown")
+              "Обратный отсчет"
+              (if
+                (eq @tab.type "cyclic-timer")
+                "Циклического таймер"
+                (if
+                  (eq @tab.type "cyclic-time")
+                  "Циклический таймер от времени"
+                  "Секундомер"
+                )
+              )
+            )
+          }}</h3>
         <button class="close-button" {{on "click" @onClose}}>×</button>
       </div>
 
       <div class="modal-body">
+        <Input
+          id="tab-name"
+          @value={{@tab.name}}
+          placeholder="Название"
+          {{on "input" this.updateName}}
+        /><br /><br />
+
         {{#unless (eq @tab.type "countdown")}}
           <div class="time-adjustment">
             <div class="time-display">
@@ -60,11 +83,12 @@
             </div>
 
             <div class="reset-section">
-              <button
-                class="reset-button"
-                {{on "click" this.resetTime}}
-              >
-                {{if (eq @tab.type "timer") "Сбросить таймер к 10 мин." "Сбросить к 0"}}
+              <button class="reset-button" {{on "click" this.resetTime}}>
+                {{if
+                  (eq @tab.type "timer")
+                  "Сбросить таймер к 10 мин."
+                  "Сбросить к 0"
+                }}
               </button>
             </div>
           </div>
@@ -105,9 +129,27 @@
               />
             </div>
             <div class="current-cycle-time">
-              <strong>Текущая длительность цикла:</strong><br>
-              <span class="cycle-time-display">{{this.formattedCycleTime}}</span>
+              <strong>Текущая длительность цикла:</strong><br />
+              <span
+                class="cycle-time-display"
+              >{{this.formattedCycleTime}}</span>
             </div>
+          </div>
+        {{/if}}
+
+        {{#if (eq @tab.type "cyclic-time")}}
+          <div class="cyclic-time-settings">
+            <label for="target-time-of-day">Время суток:</label>
+            <input
+              id="target-time-of-day"
+              type="time"
+              value={{this.formattedTargetTimeOfDay}}
+              {{on "change" this.updateTargetTimeOfDay}}
+            />
+            {{!-- <div class="current-cyclic-time">
+              <strong>Текущее время обратного отсчета:</strong><br>
+              <span class="cyclic-time-display">{{this.formattedTime}}</span>
+            </div> --}}
           </div>
         {{/if}}
 
@@ -122,19 +164,11 @@
               {{on "input" this.updateTargetDateTime}}
             />
             <div class="current-countdown-time">
-              <strong>Текущее время обратного отсчета:</strong><br>
+              <strong>Текущее время обратного отсчета:</strong><br />
               <span class="countdown-time-display">{{this.formattedTime}}</span>
             </div>
           </div>
         {{/if}}
-
-        <label for="tab-name">Название:</label>
-        <Input
-          id="tab-name"
-          @value={{@tab.name}}
-          placeholder="Введите название таймера"
-          {{on "input" this.updateName}}
-        />
 
         <label for="tab-bg-color">Цвет фона:</label>
         <input

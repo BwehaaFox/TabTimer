@@ -9,6 +9,7 @@ export default class SettingsModalComponent extends Component {
   @tracked currentTime = null;
   @tracked selectedColor = null;
   @tracked targetDateTime = null;
+  @tracked targetTimeOfDay = null;
   @tracked cycleHours = null;
   @tracked cycleMinutes = null;
   @tracked cycleSeconds = null;
@@ -26,6 +27,11 @@ export default class SettingsModalComponent extends Component {
     // Устанавливаем начальное значение целевой даты и времени для countdown
     if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
       this.targetDateTime = this.args.tab.targetDateTime;
+    }
+
+    // Устанавливаем начальное значение времени суток для cyclic-time
+    if (this.args.tab && this.args.tab.type === 'cyclic-time' && this.args.tab.targetTimeOfDay) {
+      this.targetTimeOfDay = this.args.tab.targetTimeOfDay;
     }
 
     // Устанавливаем начальные значения длительности цикла для cyclic-timer
@@ -60,7 +66,22 @@ export default class SettingsModalComponent extends Component {
         if (savedTabs) {
           const currentTab = savedTabs.find(tab => tab.id === this.args.tab.id);
           if (currentTab) {
-            this.currentTime = currentTab.time;
+            // Для cyclic-time пересчитываем время на основе targetTimeOfDay
+            if (currentTab.type === 'cyclic-time' && currentTab.targetTimeOfDay) {
+              const now = new Date();
+              const [hours, minutes] = currentTab.targetTimeOfDay.split(':').map(Number);
+              const targetTime = new Date();
+              targetTime.setHours(hours, minutes, 0, 0);
+              
+              // Если время уже прошло сегодня, считаем время до завтра
+              if (targetTime.getTime() <= now.getTime()) {
+                targetTime.setDate(targetTime.getDate() + 1);
+              }
+              
+              this.currentTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+            } else {
+              this.currentTime = currentTab.time;
+            }
           }
         }
       }
@@ -125,10 +146,25 @@ export default class SettingsModalComponent extends Component {
       const day = String(date.getDate()).padStart(2, '0');
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
     return '';
+  }
+
+  @cached
+  get formattedTargetTimeOfDay() {
+    // Сначала пробуем использовать локальное значение, если оно есть
+    if (this.targetTimeOfDay) {
+      return this.targetTimeOfDay;
+    }
+    // Иначе используем значение из tab
+    if (this.args.tab && this.args.tab.type === 'cyclic-time' && this.args.tab.targetTimeOfDay) {
+      // Возвращаем время в формате HH:MM для input type="time"
+      const [hours, minutes] = this.args.tab.targetTimeOfDay.split(':');
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    return '12:00';
   }
 
   get minusOneDisabled() {
@@ -239,6 +275,60 @@ export default class SettingsModalComponent extends Component {
       } else {
         console.error('onUpdateTargetDateTime is not a function');
       }
+    }
+  }
+
+  @action
+  updateTargetTimeOfDay(event) {
+    const newTimeOfDay = event.target.value;
+
+    if (newTimeOfDay && this.args.tab && this.args.tab.type === 'cyclic-time') {
+      // Обновляем значение в состоянии компонента
+      this.targetTimeOfDay = newTimeOfDay;
+
+      // Рассчитываем новое время для отображения
+      const now = new Date();
+      const [hours, minutes] = newTimeOfDay.split(':').map(Number);
+      const targetTime = new Date();
+      targetTime.setHours(hours, minutes, 0, 0);
+      
+      // Если время уже прошло сегодня, считаем время до завтра
+      if (targetTime.getTime() <= now.getTime()) {
+        targetTime.setDate(targetTime.getDate() + 1);
+      }
+      
+      const timeDifference = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+
+      // Обновляем локальное время для отображения
+      this.currentTime = timeDifference;
+
+      // Обновляем целевое время суток (это также обновит время таймера)
+      if (this.args.onUpdateTargetTimeOfDay && typeof this.args.onUpdateTargetTimeOfDay === 'function') {
+        this.args.onUpdateTargetTimeOfDay(this.args.tab, newTimeOfDay);
+      } else {
+        console.error('onUpdateTargetTimeOfDay is not a function');
+      }
+    }
+  }
+
+  @action
+  handleTargetTimeOfDayInput(event) {
+    // Обработчик для input события - просто обновляем локальное значение
+    const newTimeOfDay = event.target.value;
+    if (newTimeOfDay && this.args.tab && this.args.tab.type === 'cyclic-time') {
+      this.targetTimeOfDay = newTimeOfDay;
+      
+      // Пересчитываем время для отображения
+      const now = new Date();
+      const [hours, minutes] = newTimeOfDay.split(':').map(Number);
+      const targetTime = new Date();
+      targetTime.setHours(hours, minutes, 0, 0);
+      
+      if (targetTime.getTime() <= now.getTime()) {
+        targetTime.setDate(targetTime.getDate() + 1);
+      }
+      
+      this.currentTime = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
     }
   }
 
