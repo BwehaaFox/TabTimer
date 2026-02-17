@@ -37,66 +37,115 @@
         {{#unless (eq @tab.type "countdown")}}
           <div class="time-adjustment">
             <div class="time-display">
+              {{#if this.can_edit_type}}
 
-              <button
-                class="adjust-time-btn minus-hour"
-                disabled={{this.minusHourDisabled}}
-                {{on "click" (fn this.adjustTime -3600)}}
-              >
-                Ч
-              </button>
-              <button
-                class="adjust-time-btn minus-minute"
-                disabled={{this.minusMinuteDisabled}}
-                {{on "click" (fn this.adjustTime -60)}}
-              >
-                М
-              </button>
-              <button
-                class="adjust-time-btn minus-one"
-                disabled={{this.minusOneDisabled}}
-                {{on "click" (fn this.adjustTime -1)}}
-              >
-                С
-              </button>
-
+                <button
+                  class="adjust-time-btn minus-hour"
+                  disabled={{this.minusHourDisabled}}
+                  {{on "click" (fn this.adjustTime -3600)}}
+                >
+                  Ч
+                </button>
+                <button
+                  class="adjust-time-btn minus-minute"
+                  disabled={{this.minusMinuteDisabled}}
+                  {{on "click" (fn this.adjustTime -60)}}
+                >
+                  М
+                </button>
+                <button
+                  class="adjust-time-btn minus-one"
+                  disabled={{this.minusOneDisabled}}
+                  {{on "click" (fn this.adjustTime -1)}}
+                >
+                  С
+                </button>
+              {{/if}}
               <span class="current-time">{{this.formattedTime}}</span>
-
-              <button
-                class="adjust-time-btn plus-one"
-                {{on "click" (fn this.adjustTime 1)}}
-              >
-                С
-              </button>
-              <button
-                class="adjust-time-btn plus-minute"
-                {{on "click" (fn this.adjustTime 60)}}
-              >
-                М
-              </button>
-              <button
-                class="adjust-time-btn plus-hour"
-                {{on "click" (fn this.adjustTime 3600)}}
-              >
-                Ч
-              </button>
+              {{#if this.can_edit_type}}
+                <button
+                  class="adjust-time-btn plus-one"
+                  {{on "click" (fn this.adjustTime 1)}}
+                >
+                  С
+                </button>
+                <button
+                  class="adjust-time-btn plus-minute"
+                  {{on "click" (fn this.adjustTime 60)}}
+                >
+                  М
+                </button>
+                <button
+                  class="adjust-time-btn plus-hour"
+                  {{on "click" (fn this.adjustTime 3600)}}
+                >
+                  Ч
+                </button>
+              {{/if}}
             </div>
 
-            <div class="reset-section">
-              <button class="reset-button" {{on "click" this.resetTime}}>
-                {{if
-                  (eq @tab.type "timer")
-                  "Сбросить таймер к 10 мин."
-                  "Сбросить к 0"
-                }}
-              </button>
-            </div>
+            {{#if this.can_reset}}
+              <div class="reset-section">
+                <button class="reset-button" {{on "click" this.resetTime}}>
+                  {{this.reset_label}}
+                </button>
+              </div>
+            {{/if}}
+
           </div>
         {{/unless}}
 
+        {{#if (eq @tab.type "timer")}}
+          <div class="cyclic-timer-settings">
+            <label class="setting-reset-time-label" for="cycle-duration">
+              Время сброса:
+            </label>
+            <div class="time-input-group">
+              <input
+                type="number"
+                id="default-timer-hours"
+                min="0"
+                max="23"
+                placeholder="Часы"
+                value={{this.defaultTimerHours}}
+                {{on "input" this.updateDefaultTimerTime}}
+              />
+              <span>:</span>
+              <input
+                type="number"
+                id="default-timer-minutes"
+                min="0"
+                max="59"
+                placeholder="Минуты"
+                value={{this.defaultTimerMinutes}}
+                {{on "input" this.updateDefaultTimerTime}}
+              />
+              <span>:</span>
+              <input
+                type="number"
+                id="default-timer-seconds"
+                min="0"
+                max="59"
+                placeholder="Секунды"
+                value={{this.defaultTimerSeconds}}
+                {{on "input" this.updateDefaultTimerTime}}
+              />
+            </div>
+            <div class="current-cycle-time">
+              <strong>Текущее время сброса:</strong><br />
+              <span
+                class="cycle-time-display"
+              >{{this.formattedDefaultTimerTime}}</span>
+            </div>
+          </div>
+        {{/if}}
+
         {{#if (eq @tab.type "cyclic-timer")}}
           <div class="cyclic-timer-settings">
-            <label for="cycle-duration">Длительность цикла:</label>
+            <label
+              class="setting-reset-time-label"
+              for="cycle-duration"
+            >Длительность цикла:</label>
             <div class="time-input-group">
               <input
                 type="number"
@@ -139,7 +188,10 @@
 
         {{#if (eq @tab.type "cyclic-time")}}
           <div class="cyclic-time-settings">
-            <label for="target-time-of-day">Время суток:</label>
+            <label
+              class="setting-reset-time-label"
+              for="target-time-of-day"
+            >Время суток:</label>
             <input
               id="target-time-of-day"
               type="time"

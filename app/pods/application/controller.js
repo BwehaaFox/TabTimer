@@ -52,6 +52,7 @@ export default class ApplicationController extends Controller {
           cycleDuration: tab.cycleDuration || (tab.type === 'cyclic-timer' ? 3600 : undefined), // Устанавливаем длительность цикла по умолчанию для циклических таймеров
           targetDateTime: tab.targetDateTime || null, // Добавляем целевую дату и время для countdown
           targetTimeOfDay: tab.targetTimeOfDay || null, // Добавляем целевое время суток для cyclic-time
+          defaultResetTime: tab.defaultResetTime || (tab.type === 'timer' ? 600 : undefined), // Устанавливаем время сброса по умолчанию для обычного таймера
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
       });
@@ -83,12 +84,12 @@ export default class ApplicationController extends Controller {
       const now = new Date();
       const targetTime = new Date();
       targetTime.setHours(12, 0, 0, 0); // По умолчанию 12:00
-      
+
       // Если время уже прошло сегодня, считаем время до завтра
       if (targetTime.getTime() <= now.getTime()) {
         targetTime.setDate(targetTime.getDate() + 1);
       }
-      
+
       initialTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
       isRunning = true; // cyclic-time всегда запущен
     } else {
@@ -106,6 +107,7 @@ export default class ApplicationController extends Controller {
       cycleDuration: type === 'cyclic-timer' ? 3600 : undefined, // Длительность цикла по умолчанию 1 час для циклического таймера
       targetDateTime: type === 'countdown' ? new Date(Date.now() + 86400000).toISOString() : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
       targetTimeOfDay: type === 'cyclic-time' ? '12:00' : null, // Устанавливаем время суток по умолчанию 12:00 для cyclic-time
+      defaultResetTime: type === 'timer' ? 600 : undefined, // Устанавливаем время сброса по умолчанию 10 минут для обычного таймера
       backgroundColor: this.getRandomBackgroundColor(),
     };
     this.tabs = [...this.tabs, newTab];
@@ -325,6 +327,26 @@ export default class ApplicationController extends Controller {
       const updatedTab = {
         ...tab,
         cycleDuration: cycleDuration,
+        backgroundColor: tab.backgroundColor,
+      };
+      const updatedTabs = [
+        ...this.tabs.slice(0, tabIndex),
+        updatedTab,
+        ...this.tabs.slice(tabIndex + 1),
+      ];
+      this.tabs = updatedTabs;
+      this.activeSettingsTab = updatedTab;
+      this.saveTabs();
+    }
+  }
+
+  @action
+  updateTabDefaultResetTime(tab, defaultResetTime) {
+    const tabIndex = this.tabs.findIndex((t) => t.id === tab.id);
+    if (tabIndex !== -1) {
+      const updatedTab = {
+        ...tab,
+        defaultResetTime: defaultResetTime,
         backgroundColor: tab.backgroundColor,
       };
       const updatedTabs = [

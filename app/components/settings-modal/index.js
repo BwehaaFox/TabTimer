@@ -13,6 +13,9 @@ export default class SettingsModalComponent extends Component {
   @tracked cycleHours = null;
   @tracked cycleMinutes = null;
   @tracked cycleSeconds = null;
+  @tracked defaultTimerHours = null;
+  @tracked defaultTimerMinutes = null;
+  @tracked defaultTimerSeconds = null;
 
   constructor() {
     super(...arguments);
@@ -25,23 +28,47 @@ export default class SettingsModalComponent extends Component {
     }
 
     // Устанавливаем начальное значение целевой даты и времени для countdown
-    if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
+    if (
+      this.args.tab &&
+      this.args.tab.type === 'countdown' &&
+      this.args.tab.targetDateTime
+    ) {
       this.targetDateTime = this.args.tab.targetDateTime;
     }
 
     // Устанавливаем начальное значение времени суток для cyclic-time
-    if (this.args.tab && this.args.tab.type === 'cyclic-time' && this.args.tab.targetTimeOfDay) {
+    if (
+      this.args.tab &&
+      this.args.tab.type === 'cyclic-time' &&
+      this.args.tab.targetTimeOfDay
+    ) {
       this.targetTimeOfDay = this.args.tab.targetTimeOfDay;
     }
 
     // Устанавливаем начальные значения длительности цикла для cyclic-timer
     if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
-      const cycleDuration = this.args.tab.cycleDuration || 3600; // по умолчанию 1 час
+      const cycleDuration = this.cycleDuration;
       this.setCycleTimeValues(cycleDuration);
+    }
+
+    // Устанавливаем начальные значения времени сброса для обычного таймера
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      const defaultResetTime = this.args.tab.defaultResetTime || 600; // по умолчанию 10 минут
+      this.setDefaultTimerTimeValues(defaultResetTime);
     }
 
     // Запускаем интервал для обновления времени
     this.startUpdatingTime();
+  }
+
+  get can_reset() {
+    const { type } = this.args.tab;
+    return type !== 'cyclic-time';
+  }
+
+  get can_edit_type() {
+    const { type } = this.args.tab;
+    return type !== 'cyclic-time';
   }
 
   willDestroy() {
@@ -64,21 +91,30 @@ export default class SettingsModalComponent extends Component {
         // Получаем актуальные таймеры из хранилища
         const savedTabs = this.storage.getItem('tabtimer-tabs');
         if (savedTabs) {
-          const currentTab = savedTabs.find(tab => tab.id === this.args.tab.id);
+          const currentTab = savedTabs.find(
+            (tab) => tab.id === this.args.tab.id,
+          );
           if (currentTab) {
             // Для cyclic-time пересчитываем время на основе targetTimeOfDay
-            if (currentTab.type === 'cyclic-time' && currentTab.targetTimeOfDay) {
+            if (
+              currentTab.type === 'cyclic-time' &&
+              currentTab.targetTimeOfDay
+            ) {
               const now = new Date();
-              const [hours, minutes] = currentTab.targetTimeOfDay.split(':').map(Number);
+              const [hours, minutes] = currentTab.targetTimeOfDay
+                .split(':')
+                .map(Number);
               const targetTime = new Date();
               targetTime.setHours(hours, minutes, 0, 0);
-              
+
               // Если время уже прошло сегодня, считаем время до завтра
               if (targetTime.getTime() <= now.getTime()) {
                 targetTime.setDate(targetTime.getDate() + 1);
               }
-              
-              this.currentTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+
+              this.currentTime = Math.floor(
+                (targetTime.getTime() - now.getTime()) / 1000,
+              );
             } else {
               this.currentTime = currentTab.time;
             }
@@ -103,7 +139,12 @@ export default class SettingsModalComponent extends Component {
   adjustTime(amount) {
     if (this.args.tab) {
       // Используем актуальное время для расчета
-      const actualCurrentTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+      const actualCurrentTime =
+        this.currentTime !== null
+          ? this.currentTime
+          : this.args.tab
+            ? this.args.tab.time
+            : 0;
       const newTime = Math.max(0, actualCurrentTime + amount);
       this.args.onUpdateTime(this.args.tab, newTime);
 
@@ -115,10 +156,13 @@ export default class SettingsModalComponent extends Component {
   @action
   resetTime() {
     if (this.args.tab) {
+      const { type } = this.args.tab;
       let defaultTime = 0;
-      if (this.args.tab.type === 'timer') {
-        // Для таймера устанавливаем 10 минут по умолчанию при сбросе
-        defaultTime = 600;
+      if (type === 'timer') {
+        // Для таймера используем установленное пользователем значение сброса
+        defaultTime = this.args.tab.defaultResetTime || 600;
+      } else if (type == 'cyclic-timer') {
+        defaultTime = this.cycleDuration;
       }
       this.args.onUpdateTime(this.args.tab, defaultTime);
       this.currentTime = defaultTime;
@@ -128,7 +172,12 @@ export default class SettingsModalComponent extends Component {
   @cached
   get formattedTime() {
     // Используем актуальное время, если оно доступно
-    const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    const actualTime =
+      this.currentTime !== null
+        ? this.currentTime
+        : this.args.tab
+          ? this.args.tab.time
+          : 0;
     if (this.args.tab) {
       return this.formatTime(actualTime);
     }
@@ -137,7 +186,11 @@ export default class SettingsModalComponent extends Component {
 
   @cached
   get formattedTargetDateTime() {
-    if (this.args.tab && this.args.tab.type === 'countdown' && this.args.tab.targetDateTime) {
+    if (
+      this.args.tab &&
+      this.args.tab.type === 'countdown' &&
+      this.args.tab.targetDateTime
+    ) {
       // Преобразуем ISO строку в формат, подходящий для datetime-local input
       // Убираем миллисекунды и Z из строки
       const date = new Date(this.args.tab.targetDateTime);
@@ -159,7 +212,11 @@ export default class SettingsModalComponent extends Component {
       return this.targetTimeOfDay;
     }
     // Иначе используем значение из tab
-    if (this.args.tab && this.args.tab.type === 'cyclic-time' && this.args.tab.targetTimeOfDay) {
+    if (
+      this.args.tab &&
+      this.args.tab.type === 'cyclic-time' &&
+      this.args.tab.targetTimeOfDay
+    ) {
       // Возвращаем время в формате HH:MM для input type="time"
       const [hours, minutes] = this.args.tab.targetTimeOfDay.split(':');
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
@@ -168,7 +225,12 @@ export default class SettingsModalComponent extends Component {
   }
 
   get minusOneDisabled() {
-    const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    const actualTime =
+      this.currentTime !== null
+        ? this.currentTime
+        : this.args.tab
+          ? this.args.tab.time
+          : 0;
     // Для таймера кнопка "минус секунда" не должна быть отключена, так как можно уменьшать время
     if (this.args.tab && this.args.tab.type === 'timer') {
       return false;
@@ -177,7 +239,12 @@ export default class SettingsModalComponent extends Component {
   }
 
   get minusMinuteDisabled() {
-    const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    const actualTime =
+      this.currentTime !== null
+        ? this.currentTime
+        : this.args.tab
+          ? this.args.tab.time
+          : 0;
     // Для таймера кнопка "минус минута" не должна быть отключена, так как можно уменьшать время
     if (this.args.tab && this.args.tab.type === 'timer') {
       return false;
@@ -186,7 +253,12 @@ export default class SettingsModalComponent extends Component {
   }
 
   get minusHourDisabled() {
-    const actualTime = this.currentTime !== null ? this.currentTime : (this.args.tab ? this.args.tab.time : 0);
+    const actualTime =
+      this.currentTime !== null
+        ? this.currentTime
+        : this.args.tab
+          ? this.args.tab.time
+          : 0;
     // Для таймера кнопка "минус час" не должна быть отключена, так как можно уменьшать время
     if (this.args.tab && this.args.tab.type === 'timer') {
       return false;
@@ -210,23 +282,23 @@ export default class SettingsModalComponent extends Component {
     // Извлекаем значения r, g, b из строки rgba(r, g, b, a)
     const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
     if (!match) return '#ffffff'; // возвращаем белый цвет по умолчанию
-    
+
     const r = parseInt(match[1], 10).toString(16).padStart(2, '0');
     const g = parseInt(match[2], 10).toString(16).padStart(2, '0');
     const b = parseInt(match[3], 10).toString(16).padStart(2, '0');
-    
+
     return `#${r}${g}${b}`;
   }
 
   hexToRgba(hex, alpha = 0.4) {
     // Убираем # если он есть
     const cleanHex = hex.replace('#', '');
-    
+
     // Разбиваем на компоненты
     const r = parseInt(cleanHex.substring(0, 2), 16);
     const g = parseInt(cleanHex.substring(2, 4), 16);
     const b = parseInt(cleanHex.substring(4, 6), 16);
-    
+
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
@@ -246,34 +318,32 @@ export default class SettingsModalComponent extends Component {
 
   @action
   updateTargetDateTime(event) {
-    console.log('updateTargetDateTime called', event.target.value);
     const newDateTime = event.target.value;
-    console.log('Args received:', this.args);
-    console.log('onUpdateTargetDateTime function exists:', typeof this.args.onUpdateTargetDateTime);
 
     if (newDateTime && this.args.tab && this.args.tab.type === 'countdown') {
       // Преобразуем выбранное значение в ISO строку
       const selectedDate = new Date(newDateTime);
       const isoString = selectedDate.toISOString();
 
-      console.log('Updating target date time:', isoString);
-
       // Обновляем значение в состоянии компонента
       this.targetDateTime = isoString;
 
       // Рассчитываем новое время для отображения
       const now = new Date();
-      const timeDifference = Math.max(0, Math.floor((selectedDate.getTime() - now.getTime()) / 1000));
+      const timeDifference = Math.max(
+        0,
+        Math.floor((selectedDate.getTime() - now.getTime()) / 1000),
+      );
 
       // Обновляем локальное время для отображения
       this.currentTime = timeDifference;
 
       // Обновляем целевую дату и время (это также обновит время таймера)
-      if (this.args.onUpdateTargetDateTime && typeof this.args.onUpdateTargetDateTime === 'function') {
-        console.log('Calling onUpdateTargetDateTime');
+      if (
+        this.args.onUpdateTargetDateTime &&
+        typeof this.args.onUpdateTargetDateTime === 'function'
+      ) {
         this.args.onUpdateTargetDateTime(this.args.tab, isoString);
-      } else {
-        console.error('onUpdateTargetDateTime is not a function');
       }
     }
   }
@@ -291,19 +361,25 @@ export default class SettingsModalComponent extends Component {
       const [hours, minutes] = newTimeOfDay.split(':').map(Number);
       const targetTime = new Date();
       targetTime.setHours(hours, minutes, 0, 0);
-      
+
       // Если время уже прошло сегодня, считаем время до завтра
       if (targetTime.getTime() <= now.getTime()) {
         targetTime.setDate(targetTime.getDate() + 1);
       }
-      
-      const timeDifference = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+
+      const timeDifference = Math.max(
+        0,
+        Math.floor((targetTime.getTime() - now.getTime()) / 1000),
+      );
 
       // Обновляем локальное время для отображения
       this.currentTime = timeDifference;
 
       // Обновляем целевое время суток (это также обновит время таймера)
-      if (this.args.onUpdateTargetTimeOfDay && typeof this.args.onUpdateTargetTimeOfDay === 'function') {
+      if (
+        this.args.onUpdateTargetTimeOfDay &&
+        typeof this.args.onUpdateTargetTimeOfDay === 'function'
+      ) {
         this.args.onUpdateTargetTimeOfDay(this.args.tab, newTimeOfDay);
       } else {
         console.error('onUpdateTargetTimeOfDay is not a function');
@@ -317,19 +393,29 @@ export default class SettingsModalComponent extends Component {
     const newTimeOfDay = event.target.value;
     if (newTimeOfDay && this.args.tab && this.args.tab.type === 'cyclic-time') {
       this.targetTimeOfDay = newTimeOfDay;
-      
+
       // Пересчитываем время для отображения
       const now = new Date();
       const [hours, minutes] = newTimeOfDay.split(':').map(Number);
       const targetTime = new Date();
       targetTime.setHours(hours, minutes, 0, 0);
-      
+
       if (targetTime.getTime() <= now.getTime()) {
         targetTime.setDate(targetTime.getDate() + 1);
       }
-      
-      this.currentTime = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+
+      this.currentTime = Math.max(
+        0,
+        Math.floor((targetTime.getTime() - now.getTime()) / 1000),
+      );
     }
+  }
+
+  get cycle_timer_total_seconds() {
+    const hours = parseInt(this.cycleHours) || 0;
+    const minutes = parseInt(this.cycleMinutes) || 0;
+    const seconds = parseInt(this.cycleSeconds) || 0;
+    return hours * 3600 + minutes * 60 + seconds;
   }
 
   @action
@@ -342,18 +428,16 @@ export default class SettingsModalComponent extends Component {
     } else if (event.target.id === 'cycle-duration-seconds') {
       this.cycleSeconds = event.target.value;
     }
-    
-    if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
-      // Получаем значения из всех полей
-      const hours = parseInt(this.cycleHours) || 0;
-      const minutes = parseInt(this.cycleMinutes) || 0;
-      const seconds = parseInt(this.cycleSeconds) || 0;
 
+    if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
       // Рассчитываем общее время в секундах
-      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+      const totalSeconds = this.cycle_timer_total_seconds;
 
       // Обновляем длительность цикла
-      if (this.args.onUpdateCycleDuration && typeof this.args.onUpdateCycleDuration === 'function') {
+      if (
+        this.args.onUpdateCycleDuration &&
+        typeof this.args.onUpdateCycleDuration === 'function'
+      ) {
         this.args.onUpdateCycleDuration(this.args.tab, totalSeconds);
       }
     }
@@ -369,11 +453,75 @@ export default class SettingsModalComponent extends Component {
     this.cycleSeconds = seconds;
   }
 
+  get cycleDuration() {
+    return this.args.tab.cycleDuration || 3600;
+  }
+
   @cached
   get formattedCycleTime() {
     if (this.args.tab && this.args.tab.type === 'cyclic-timer') {
-      const cycleDuration = this.args.tab.cycleDuration || 3600; // по умолчанию 1 час
-      return this.formatTime(cycleDuration);
+      return this.formatTime(this.cycleDuration);
+    }
+    return '0:00';
+  }
+
+  get reset_label() {
+    switch (this.args.tab.type) {
+      case 'cyclic-timer':
+        return 'Сбросить цикл';
+      case 'stopwatch':
+        return 'Сбросить секундомер';
+
+      default:
+        return 'Сбросить таймер';
+    }
+  }
+
+  @action
+  updateDefaultTimerTime(event) {
+    // Обновляем внутренние значения в зависимости от того, какое поле было изменено
+    if (event.target.id === 'default-timer-hours') {
+      this.defaultTimerHours = event.target.value;
+    } else if (event.target.id === 'default-timer-minutes') {
+      this.defaultTimerMinutes = event.target.value;
+    } else if (event.target.id === 'default-timer-seconds') {
+      this.defaultTimerSeconds = event.target.value;
+    }
+
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      // Получаем значения из всех полей
+      const hours = parseInt(this.defaultTimerHours) || 0;
+      const minutes = parseInt(this.defaultTimerMinutes) || 0;
+      const seconds = parseInt(this.defaultTimerSeconds) || 0;
+
+      // Рассчитываем общее время в секундах
+      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+      // Обновляем время сброса таймера
+      if (
+        this.args.onUpdateDefaultResetTime &&
+        typeof this.args.onUpdateDefaultResetTime === 'function'
+      ) {
+        this.args.onUpdateDefaultResetTime(this.args.tab, totalSeconds);
+      }
+    }
+  }
+
+  setDefaultTimerTimeValues(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    this.defaultTimerHours = hours;
+    this.defaultTimerMinutes = minutes;
+    this.defaultTimerSeconds = seconds;
+  }
+
+  @cached
+  get formattedDefaultTimerTime() {
+    if (this.args.tab && this.args.tab.type === 'timer') {
+      const defaultResetTime = this.args.tab.defaultResetTime || 600; // по умолчанию 10 минут
+      return this.formatTime(defaultResetTime);
     }
     return '0:00';
   }

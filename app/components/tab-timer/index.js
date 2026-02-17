@@ -159,7 +159,10 @@ export default class TabTimerComponent extends Component {
     // Проверяем каждый таймер на предмет завершения
     currentTabs.forEach((currentTab) => {
       if (
-        (currentTab.type === 'timer' || currentTab.type === 'countdown' || currentTab.type === 'cyclic-timer' || currentTab.type === 'cyclic-time') &&
+        (currentTab.type === 'timer' ||
+          currentTab.type === 'countdown' ||
+          currentTab.type === 'cyclic-timer' ||
+          currentTab.type === 'cyclic-time') &&
         currentTab.time === 0
       ) {
         // Найдем предыдущее состояние этого таймера
@@ -178,7 +181,6 @@ export default class TabTimerComponent extends Component {
 
   // Метод для установки дополнительного класса для завершенного таймера
   setExtraClassForFinishedTimer(currentTab) {
-    console.log(currentTab);
     this.extraClassForFinishedTimer[currentTab] = true;
 
     // Устанавливаем таймер на 10 секунд для удаления дополнительного класса
