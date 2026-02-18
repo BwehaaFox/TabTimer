@@ -1,6 +1,7 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
 import { tracked, cached } from '@glimmer/tracking';
+import { playNotificationSound } from '../../utils/notification-sound';
 
 export default class TabTimerComponent extends Component {
   @tracked showAddDropdown = false;
@@ -182,9 +183,11 @@ export default class TabTimerComponent extends Component {
   // Метод для установки дополнительного класса для завершенного таймера
   setExtraClassForFinishedTimer(currentTab) {
     this.extraClassForFinishedTimer[currentTab] = true;
+    const sound = playNotificationSound();
 
     // Устанавливаем таймер на 10 секунд для удаления дополнительного класса
     setTimeout(() => {
+      sound.abort();
       if (this.extraClassForFinishedTimer[currentTab]) {
         delete this.extraClassForFinishedTimer[currentTab];
         this.extraClassForFinishedTimer = {
