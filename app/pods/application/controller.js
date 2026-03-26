@@ -5,12 +5,19 @@ import { inject as service } from '@ember/service';
 
 export default class ApplicationController extends Controller {
   @service storage;
+  @service system;
 
   @tracked tabs = [];
   @tracked activeSettingsTab = null;
   @tracked showSettingsModal = false;
   @tracked showConfirmDeleteModal = false;
   @tracked tabToDelete = null;
+
+  get actialTabs() {
+    return this.system.isTransparentMode
+      ? this.tabs.filter((t) => t.isRunning)
+      : this.tabs;
+  }
 
   timerIntervalId = null;
   // Хранение таймаутов для циклических таймеров
@@ -49,10 +56,13 @@ export default class ApplicationController extends Controller {
           isRunning:
             typeof tab.isRunning !== 'undefined' ? tab.isRunning : false,
           time: tab.time || 0,
-          cycleDuration: tab.cycleDuration || (tab.type === 'cyclic-timer' ? 3600 : undefined), // Устанавливаем длительность цикла по умолчанию для циклических таймеров
+          cycleDuration:
+            tab.cycleDuration ||
+            (tab.type === 'cyclic-timer' ? 3600 : undefined), // Устанавливаем длительность цикла по умолчанию для циклических таймеров
           targetDateTime: tab.targetDateTime || null, // Добавляем целевую дату и время для countdown
           targetTimeOfDay: tab.targetTimeOfDay || null, // Добавляем целевое время суток для cyclic-time
-          defaultResetTime: tab.defaultResetTime || (tab.type === 'timer' ? 600 : undefined), // Устанавливаем время сброса по умолчанию для обычного таймера
+          defaultResetTime:
+            tab.defaultResetTime || (tab.type === 'timer' ? 600 : undefined), // Устанавливаем время сброса по умолчанию для обычного таймера
           backgroundColor: backgroundColor || this.getRandomBackgroundColor(),
         };
       });
@@ -105,7 +115,10 @@ export default class ApplicationController extends Controller {
       isRunning: isRunning,
       type: type,
       cycleDuration: type === 'cyclic-timer' ? 3600 : undefined, // Длительность цикла по умолчанию 1 час для циклического таймера
-      targetDateTime: type === 'countdown' ? new Date(Date.now() + 86400000).toISOString() : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
+      targetDateTime:
+        type === 'countdown'
+          ? new Date(Date.now() + 86400000).toISOString()
+          : null, // Устанавливаем дату на 1 день вперед по умолчанию для countdown
       targetTimeOfDay: type === 'cyclic-time' ? '12:00' : null, // Устанавливаем время суток по умолчанию 12:00 для cyclic-time
       defaultResetTime: type === 'timer' ? 600 : undefined, // Устанавливаем время сброса по умолчанию 10 минут для обычного таймера
       backgroundColor: this.getRandomBackgroundColor(),
@@ -140,7 +153,11 @@ export default class ApplicationController extends Controller {
       const newIsRunningState = !isCurrentlyRunning;
 
       // Если останавливаем циклический таймер или cyclic-time, очищаем его таймаут
-      if ((tab.type === 'cyclic-timer' || tab.type === 'cyclic-time') && isCurrentlyRunning && !newIsRunningState) {
+      if (
+        (tab.type === 'cyclic-timer' || tab.type === 'cyclic-time') &&
+        isCurrentlyRunning &&
+        !newIsRunningState
+      ) {
         if (this.cyclicTimerTimeouts.has(tab.id)) {
           const timeoutId = this.cyclicTimerTimeouts.get(tab.id);
           clearTimeout(timeoutId);
@@ -270,13 +287,16 @@ export default class ApplicationController extends Controller {
       // Рассчитываем новое время на основе новой целевой даты
       const targetDate = new Date(targetDateTime);
       const now = new Date();
-      const newTime = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
-      
+      const newTime = Math.max(
+        0,
+        Math.floor((targetDate.getTime() - now.getTime()) / 1000),
+      );
+
       console.log('Calculated new time:', newTime);
-      
+
       // Для countdown таймера устанавливаем isRunning в true, если время не истекло
       const isRunning = newTime > 0;
-      
+
       const updatedTab = {
         ...tab,
         targetDateTime: targetDateTime,
@@ -290,12 +310,12 @@ export default class ApplicationController extends Controller {
         ...this.tabs.slice(tabIndex + 1),
       ];
       this.tabs = updatedTabs;
-      
+
       // Обновляем activeSettingsTab, если он соответствует изменяемому табу
       if (this.activeSettingsTab && this.activeSettingsTab.id === tab.id) {
         this.activeSettingsTab = updatedTab;
       }
-      
+
       this.saveTabs();
       console.log('Updated tabs and saved');
     }
@@ -375,7 +395,10 @@ export default class ApplicationController extends Controller {
         targetTime.setDate(targetTime.getDate() + 1);
       }
 
-      const newTime = Math.max(0, Math.floor((targetTime.getTime() - now.getTime()) / 1000));
+      const newTime = Math.max(
+        0,
+        Math.floor((targetTime.getTime() - now.getTime()) / 1000),
+      );
 
       // Создаём новый объект с обновлёнными значениями
       const updatedTab = {
@@ -400,7 +423,7 @@ export default class ApplicationController extends Controller {
       }
 
       this.saveTabs();
-      
+
       // Перезапускаем timerLoop, чтобы он использовал актуальное значение targetTimeOfDay
       this.restartTimerLoop();
     }
@@ -539,13 +562,14 @@ export default class ApplicationController extends Controller {
             newTime = Math.max(0, tab.time - 1);
 
             // Если циклический таймер достиг 0, начинаем процесс циклического сброса
-            if (newTime === 0 && tab.time > 0) { // Проверяем, что таймер только что достиг 0
+            if (newTime === 0 && tab.time > 0) {
+              // Проверяем, что таймер только что достиг 0
               // Проверяем, есть ли уже таймаут для этого таймера
               if (!this.cyclicTimerTimeouts.has(tab.id)) {
                 // Устанавливаем таймаут на 10 секунд для сброса таймера
                 const timeoutId = setTimeout(() => {
                   // Находим таймер снова, чтобы получить актуальное состояние
-                  const currentTab = this.tabs.find(t => t.id === tab.id);
+                  const currentTab = this.tabs.find((t) => t.id === tab.id);
                   if (currentTab && currentTab.isRunning) {
                     // Сбрасываем таймер к начальному значению (cycleDuration)
                     const resetTab = {
@@ -555,7 +579,9 @@ export default class ApplicationController extends Controller {
                     };
 
                     // Обновляем табы
-                    const tabIndex = this.tabs.findIndex(t => t.id === currentTab.id);
+                    const tabIndex = this.tabs.findIndex(
+                      (t) => t.id === currentTab.id,
+                    );
                     if (tabIndex !== -1) {
                       const updatedTabsAfterReset = [
                         ...this.tabs.slice(0, tabIndex),
@@ -587,7 +613,10 @@ export default class ApplicationController extends Controller {
             if (tab.targetDateTime) {
               const targetDate = new Date(tab.targetDateTime);
               const now = new Date();
-              newTime = Math.max(0, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+              newTime = Math.max(
+                0,
+                Math.floor((targetDate.getTime() - now.getTime()) / 1000),
+              );
 
               // Если время истекло, останавливаем таймер
               if (newTime === 0) {
@@ -599,7 +628,7 @@ export default class ApplicationController extends Controller {
                   backgroundColor: tab.backgroundColor,
                 };
               }
-              
+
               return {
                 ...tab,
                 time: newTime,
@@ -612,7 +641,9 @@ export default class ApplicationController extends Controller {
             // Для cyclic-time пересчитываем время до целевого времени суток
             if (tab.targetTimeOfDay) {
               const now = new Date();
-              const [hours, minutes] = tab.targetTimeOfDay.split(':').map(Number);
+              const [hours, minutes] = tab.targetTimeOfDay
+                .split(':')
+                .map(Number);
               const targetTime = new Date();
               targetTime.setHours(hours, minutes, 0, 0);
 
@@ -621,7 +652,9 @@ export default class ApplicationController extends Controller {
                 targetTime.setDate(targetTime.getDate() + 1);
               }
 
-              newTime = Math.floor((targetTime.getTime() - now.getTime()) / 1000);
+              newTime = Math.floor(
+                (targetTime.getTime() - now.getTime()) / 1000,
+              );
 
               // cyclic-time всегда запущен и циклично перезапускается
               return {
@@ -657,13 +690,13 @@ export default class ApplicationController extends Controller {
     if (this.timerIntervalId) {
       clearInterval(this.timerIntervalId);
     }
-    
+
     // Очищаем все таймауты для циклических таймеров
     for (const [id, timeoutId] of this.cyclicTimerTimeouts) {
       clearTimeout(timeoutId);
     }
     this.cyclicTimerTimeouts.clear();
-    
+
     super.willDestroy(...arguments);
   }
 }

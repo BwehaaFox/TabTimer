@@ -31,17 +31,9 @@
             {{else if (eq tab.type "countdown")}}
               <img class="tab-content-icon" src="assets/calendar.svg" alt="" />
             {{else if (eq tab.type "cyclic-timer")}}
-              <img
-                class="tab-content-icon"
-                src="assets/repeat.svg"
-                alt=""
-              />
+              <img class="tab-content-icon" src="assets/repeat.svg" alt="" />
             {{else if (eq tab.type "cyclic-time")}}
-              <img
-                class="tab-content-icon"
-                src="assets/clock.svg"
-                alt=""
-              />
+              <img class="tab-content-icon" src="assets/clock.svg" alt="" />
             {{else}}
               <img
                 class="tab-content-icon"
@@ -80,7 +72,9 @@
             }}</span>
           <div class="tab-content__hovered">
             <span class="tab-name">{{if tab.name tab.name ""}}</span>
-            {{#unless (or (eq tab.type "countdown") (eq tab.type "cyclic-time"))}}
+            {{#unless
+              (or (eq tab.type "countdown") (eq tab.type "cyclic-time"))
+            }}
               <button
                 class="start-stop-button"
                 {{on "click" (fn @onToggleTimer tab)}}
@@ -117,31 +111,49 @@
             class="dropdown-option"
             {{on "click" (fn this.addNewTab "stopwatch")}}
           >
-            Добавить секундомер
+            <img
+              class="dropdown-option-icon"
+              src="assets/chevron-up.svg"
+              alt=""
+            />
+            <span>Секундомер</span>
           </button>
           <button
             class="dropdown-option"
             {{on "click" (fn this.addNewTab "timer")}}
           >
-            Добавить таймер
-          </button>
-          <button
-            class="dropdown-option"
-            {{on "click" (fn this.addNewTab "countdown")}}
-          >
-            Добавить обратный отсчет
+            <img
+              class="dropdown-option-icon"
+              src="assets/chevron-down.svg"
+              alt=""
+            />
+            <span>Таймер</span>
           </button>
           <button
             class="dropdown-option"
             {{on "click" (fn this.addNewTab "cyclic-timer")}}
           >
-            Добавить циклический таймер
+            <img class="dropdown-option-icon" src="assets/repeat.svg" alt="" />
+            <span>Цикличный таймер</span>
           </button>
+          <button
+            class="dropdown-option"
+            {{on "click" (fn this.addNewTab "countdown")}}
+          >
+            <img
+              class="dropdown-option-icon"
+              src="assets/calendar.svg"
+              alt=""
+            />
+            <span>Дедлайн</span>
+          </button>
+
           <button
             class="dropdown-option"
             {{on "click" (fn this.addNewTab "cyclic-time")}}
           >
-            Добавить циклический таймер от времени
+            <img class="dropdown-option-icon" src="assets/clock.svg" alt="" />
+            <span>Дневной дедлайн</span>
           </button>
         </div>
       {{/if}}

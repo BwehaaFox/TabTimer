@@ -130,20 +130,37 @@ function createWindow() {
   //   }
   // }, 2000); // Проверяем каждые 2 секунды
 }
-
+let transparentMode = true;
+let savedIgnoreState = [];
 function createTray() {
   tray = new Tray(path.join(__dirname, '../electron/assets/icon.png')); // Путь к иконке
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Закрыть приложение',
-      click: () => {
-        app.quit();
+  const updateMenu = () => {
+    transparentMode = !transparentMode;
+    const template = [
+      {
+        label: transparentMode ? '🟢 Прозрачный режим' : '🔴 Прозрачный режим',
+        click: () => {
+          updateMenu();
+          mainWindow.setIgnoreMouseEvents(
+            ...(transparentMode ? [true] : savedIgnoreState),
+          );
+          mainWindow.webContents.send(
+            'change-transparent-mode',
+            transparentMode,
+          );
+        },
       },
-    },
-  ]);
+      { label: 'Выход', click: () => app.quit() },
+    ];
 
-  tray.setContextMenu(contextMenu);
+    const contextMenu = Menu.buildFromTemplate(template);
+    tray.setContextMenu(contextMenu); // Это обновляет визуальную часть
+  };
+
+  updateMenu();
+
+  // tray.setContextMenu(contextMenu);
   tray.setToolTip('TabTimer');
 
   // При правом клике показываем контекстное меню
@@ -185,8 +202,12 @@ app.on('window-all-closed', () => {
 ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
   const webContents = event.sender;
   const win = BrowserWindow.fromWebContents(webContents);
-
+  if (transparentMode) {
+    // win.setIgnoreMouseEvents(true, options);
+    return;
+  }
   // Важно: на Windows/macOS используем forward: true,
   // чтобы события наведения всё равно приходили в JS
-  win.setIgnoreMouseEvents(ignore, options);
+  savedIgnoreState = [ignore, options];
+  win.setIgnoreMouseEvents(...savedIgnoreState);
 });
